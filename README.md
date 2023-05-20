@@ -1,6 +1,11 @@
 Helps you remain focused on a topic of study for extended periods.
 
-[![](https://i.imgur.com/Ly7c7xS.png)](http://www.example.com/)
+[![](https://i.imgur.com/Ly7c7xS.png)][download]
+
+> Click [here][download] to download the extension. \
+> With [Silver lining] technology!
+
+[Silver lining]: https://www.youtube.com/watch?v=fymJVb0BqCc
 
 <br>
 <br>
@@ -33,3 +38,6 @@ Helps you remain focused on a topic of study for extended periods.
 - [How to block a website when you’re distracted and need to focus : Robby Macdonell](https://blog.rescuetime.com/getting-the-most-out-of-rescuetimes-website-blocking/)
 - [Attention span - Wikipedia](https://en.wikipedia.org/wiki/Attention_span)
 - [Whistle free icon : flatart_icons](https://www.flaticon.com/free-icon/whistle_3271746)
+
+
+[download]: https://github.com/wolfram77/chrome-attention-training/releases/download/v0.1/chrome-attention-training.crx
