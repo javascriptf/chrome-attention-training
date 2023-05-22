@@ -5,14 +5,17 @@
   "description": "Helps you remain focused on a topic of study for extended periods.",
   "permissions": [
     "storage",
-    "tabs"
+    "tabs",
+    "scripting",
+    "activeTab"
   ],
   "host_permissions": [
     "http://*/*",
     "https://*/*"
   ],
   "action": {
-    "default_popup": "scripts/popup.html"
+    "default_popup": "scripts/popup.html",
+    "default_icon": "sea.png"
   },
   "background": {
     "service_worker": "scripts/background.js",

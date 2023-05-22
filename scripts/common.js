@@ -11,6 +11,7 @@ export const HTTPS = [
 /** Default config. */
 export const DEFAULT_CONFIG = {
   mode: 'disabled',
+  list: []
 };
 
 
@@ -201,3 +202,14 @@ export async function setMode(mode) {
   await chrome.storage.local.set({mode});
 }
 // #endregion
+
+export async function addBlockList(item) {
+  let list = await getBlockList()
+  list.push(item)
+  await chrome.storage.local.set({list})
+}
+
+export async function getBlockList() {
+  let blocklist = await chrome.storage.local.get('list')
+  return blocklist.list || DEFAULT_CONFIG.list
+}
