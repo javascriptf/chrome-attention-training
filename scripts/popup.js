@@ -23,6 +23,7 @@ async function main() {
   var toggleAddDefault = document.querySelector('#toggleAddDefault')
   var bl_input = document.querySelector('#bl-item')
   // buttonMode.textContent = mode.toUpperCase();
+  buttonMode.checked = (mode === 'ruthless')? true:false
 
   buttonMode.addEventListener('click', async () => {
     // Toggle focus mode.
