@@ -1,4 +1,4 @@
-import {HTTPS, isUrlBlacklisted, getMode, setMode, addBlockList, getBlockList} from './common.js';
+import {HTTPS, isUrlBlacklisted, getMode, setMode, addBlockList, getBlockList, getClientTimeZone, checkIfTimeHasFinished, toggleDefaultList} from './common.js';
 
 
 
@@ -19,13 +19,20 @@ async function main() {
   var buttonMode = document.querySelector('#modeToggle');
   var buttonShowBL = document.querySelector('#show_block_list_btn')
   var buttonAddBL = document.querySelector('#add_blocklist')
-  buttonMode.textContent = mode.toUpperCase();
+  var buttonGetDate = document.querySelector('#get-date')
+  var toggleAddDefault = document.querySelector('#toggleAddDefault')
+  var bl_input = document.querySelector('#bl-item')
+  // buttonMode.textContent = mode.toUpperCase();
 
   buttonMode.addEventListener('click', async () => {
     // Toggle focus mode.
     var mode = await getMode();
-    var mode = mode==='ruthless'? 'disabled' : 'ruthless';
-    buttonMode.textContent = mode.toUpperCase();
+    if(buttonMode.checked){
+      mode = 'ruthless'
+    }else{
+      mode = 'disabled'
+    }
+    // buttonMode.textContent = mode.toUpperCase();
     await setMode(mode);
     // Close blacklisted tabs.
     if (mode!=='ruthless') return;
@@ -47,11 +54,16 @@ async function main() {
   buttonAddBL.addEventListener('click', async () => {
     let item = document.querySelector('#bl-item').value
     await addBlockList(item)
+    bl_input.value = ''
   })
 
   buttonShowBL.addEventListener('click', async () => {
     blockList = await getBlockList()
     document.querySelector('#block-list').innerHTML = '';
+    let isDeafultSelected = toggleAddDefault.checked
+    if(isDeafultSelected){
+      blockList = [...blockList,"DEFAULT LIST"]
+    }
 
     if(blockList){
       blockList.map((item) => {
@@ -60,6 +72,26 @@ async function main() {
         document.querySelector('#block-list').appendChild(li)
       })
     }
+  })
+
+  bl_input.addEventListener("keyup", function(event) {
+    event.preventDefault();
+    if (event.keyCode === 13) {
+      buttonAddBL.click();
+    }
+});
+
+  buttonGetDate.addEventListener('click', async ()=> {
+    var cdate = await getClientTimeZone()
+    var haspassed = await checkIfTimeHasFinished(cdate.getTime())
+    console.log(cdate.getTime())
+    console.log("from internet")
+    console.log(haspassed.getTime())
+  })
+
+  toggleAddDefault.addEventListener('click', async () => {
+    // console.log(toggleAddDefault.checked)
+    await toggleDefaultList(toggleAddDefault.checked)
   })
 
 }

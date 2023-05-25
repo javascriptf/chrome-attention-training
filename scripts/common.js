@@ -11,7 +11,8 @@ export const HTTPS = [
 /** Default config. */
 export const DEFAULT_CONFIG = {
   mode: 'disabled',
-  list: []
+  list: [],
+  add_default: false
 };
 
 
@@ -172,8 +173,15 @@ function searchWildcardList(list, value) {
  * @param {string} url url string
  * @returns {boolean} true if blacklisted, false otherwise
  */
-export function isUrlBlacklisted(url) {
+export async function isUrlBlacklisted(url) {
   if (!url) return false;
+  let blocklist = await chrome.storage.local.get('list')
+  let addDefaultList = await chrome.storage.local.get('add_default')
+
+  if(addDefaultList){
+    blocklist = [...blocklist,...DEFAULT_BLACKLIST]
+  }
+
   var {protocol, hostname} = new URL(url);
   var hostname = hostname.replace(/^www\./, '');
   if (!protocol.startsWith('http')) return false;
@@ -203,6 +211,11 @@ export async function setMode(mode) {
 }
 // #endregion
 
+export async function toggleDefaultList(isSet){
+  await chrome.storage.local.set({add_default: isSet})
+}
+
+
 export async function addBlockList(item) {
   let list = await getBlockList()
   list.push(item)
@@ -212,4 +225,33 @@ export async function addBlockList(item) {
 export async function getBlockList() {
   let blocklist = await chrome.storage.local.get('list')
   return blocklist.list || DEFAULT_CONFIG.list
+}
+
+export async function clearBlockList(){
+  let list = []
+  await chrome.storage.local.set({list})
+}
+
+
+
+
+export async function getClientTimeZone(){
+  return new Date()
+}
+
+export async function checkIfTimeHasFinished(currentTime){
+  let internetTime
+
+  var val = fetch('http://worldtimeapi.org/api/ip')
+  .then(response => response.json())
+  .then(data => {
+    internetTime = new Date(data.datetime);
+    return internetTime
+    console.log('Current time:', internetTime);
+  })
+  .catch(error => {
+    console.error('Error:', error);
+  });
+
+  return val
 }

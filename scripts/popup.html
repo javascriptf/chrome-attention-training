@@ -17,14 +17,33 @@
 <h1>Attention training</h1>
 
 <div>
-  <input type="text" id="bl-item"/>
+  <div class="form-group">
+    <span>https://www.</span>
+    <input class="form-field" id="bl-item" type="text" placeholder="hostname">
+</div>
   <button id="add_blocklist">Add to Blocklist</button>
   <button id="show_block_list_btn">See Blocklist</button>
   <ul id="block-list">
   </ul>
+  <div class="form-group">
+    <label>Add Default List</label>
+    <label class="switch">
+      <input type="checkbox" id="toggleAddDefault">
+      <span class="slider round"></span>
+    </label>
+  </div>
+  <div class="form-group">
+    <label>Blocking</label>
+    <label class="switch">
+      <input type="checkbox" id="modeToggle">
+      <span class="slider round"></span>
+    </label>
+  </div>
 </div>
 
-<button id="modeToggle">DISABLED</button>
+<button id="get-date">Get DATE</button>
+
+<!-- <button id="modeToggle">DISABLED</button> -->
 <ul></ul>
 
 <script src="./popup.js" type="module"></script>
