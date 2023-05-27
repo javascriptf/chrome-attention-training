@@ -5,8 +5,6 @@ Helps you remain focused on a topic of study for extended periods.
 > Click [here][download] to download the extension. \
 > With [Silver lining] technology!
 
-[Silver lining]: https://www.youtube.com/watch?v=fymJVb0BqCc
-
 <br>
 <br>
 
