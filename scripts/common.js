@@ -175,20 +175,18 @@ function searchWildcardList(list, value) {
  */
 export async function isUrlBlacklisted(url) {
   if (!url) return false;
-  let blocklist = await chrome.storage.local.get('list')
-  let addDefaultList = await chrome.storage.local.get('add_default')
+  let blockList = await chrome.storage.local.get('list')
 
-  if(addDefaultList){
-    blocklist = [...blocklist,...DEFAULT_BLACKLIST]
-  }
+  blockList.list = await createBlockList(blockList.list)
 
   var {protocol, hostname} = new URL(url);
   var hostname = hostname.replace(/^www\./, '');
   if (!protocol.startsWith('http')) return false;
   if (searchWildcardList(DEFAULT_WHITELIST, hostname) >= 0) return false;
-  if (searchWildcardList(DEFAULT_BLACKLIST, hostname) >= 0) return true;
+  if (searchWildcardList(blockList.list, hostname) >= 0) return true;
   return false;
 }
+
 
 
 /**
@@ -211,29 +209,49 @@ export async function setMode(mode) {
 }
 // #endregion
 
+
+// Toggle add Deafult list to blocklist. Sets add_default to isSet and clears 
 export async function toggleDefaultList(isSet){
   await chrome.storage.local.set({add_default: isSet})
 }
 
+// let defaultToggle = await chrome.storage.local.get('add_default')
+// if(!defaultToggle.add_default){
+//   await clearBlockList()
+// }
 
+// Adds item to list property of local storage
 export async function addBlockList(item) {
   let list = await getBlockList()
   list.push(item)
   await chrome.storage.local.set({list})
 }
 
+// retrieves list property from local storage
 export async function getBlockList() {
   let blocklist = await chrome.storage.local.get('list')
   return blocklist.list || DEFAULT_CONFIG.list
 }
 
+// clears list property from local storage
 export async function clearBlockList(){
   let list = []
   await chrome.storage.local.set({list})
 }
 
+// Whenever add default list toggle is on, add default blocklist to list from storage
+//  and then run isUrlBlacklisted
+async function createBlockList(list){
+  let defaultToggle = await chrome.storage.local.get('add_default')
+  if(defaultToggle.add_default){
+    list = [...list,...DEFAULT_BLACKLIST]
+  }
+  return list
+} 
 
 
+
+// !!!! -----?>>>>>>>
 
 export async function getClientTimeZone(){
   return new Date()

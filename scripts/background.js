@@ -20,6 +20,8 @@ async function main() {
     if(tab.url=='chrome://newtab/') {
       return;
     }
+    console.log("testing")
+    console.log(await testFunction())
     if (!isUrlBlacklisted(tab.url)) return;
     try { if (tab && tab.id) await chrome.tabs.remove(tab.id); }
     catch (e) { console.error(e); }

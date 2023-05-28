@@ -16,15 +16,17 @@
 <body>
 <h1>Attention training</h1>
 
-<div>
+<div class="main">
+<div class="add-new-section">
+  <label>Add to BLocklist</label>
   <div class="form-group">
     <span>https://www.</span>
     <input class="form-field" id="bl-item" type="text" placeholder="hostname">
 </div>
-  <button id="add_blocklist">Add to Blocklist</button>
-  <button id="show_block_list_btn">See Blocklist</button>
-  <ul id="block-list">
-  </ul>
+<button id="add-bl">Add to Blocklist</button>
+</div>
+
+<div class="settings-section">
   <div class="form-group">
     <label>Add Default List</label>
     <label class="switch">
@@ -32,6 +34,17 @@
       <span class="slider round"></span>
     </label>
   </div>
+  <div class="set-timer">
+
+  </div>
+</div>
+
+<div class="see-blocklist-section">
+  <button id="show-bl-btn">See Blocklist</button>
+  <ul id="bl">
+  </ul>
+</div>
+
   <div class="form-group">
     <label>Blocking</label>
     <label class="switch">
@@ -39,12 +52,16 @@
       <span class="slider round"></span>
     </label>
   </div>
-</div>
 
-<button id="get-date">Get DATE</button>
+  <div>
+    <button class="" id="start-session">Start Session</button>
+  </div>
+
+</div>
+<!-- <button id="get-date">Get DATE</button> -->
 
 <!-- <button id="modeToggle">DISABLED</button> -->
-<ul></ul>
+
 
 <script src="./popup.js" type="module"></script>
 </body>
