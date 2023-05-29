@@ -1,4 +1,4 @@
-import {isUrlBlacklisted, getMode} from './common.js';
+import {isUrlBlacklisted, getMode, testFunction} from './common.js';
 
 
 
@@ -16,12 +16,12 @@ async function main() {
   chrome.tabs.onUpdated.addListener(async (tabId) => {
     var mode = await getMode();
     var tab = await chrome.tabs.get(tabId);
+
     if (mode!=='ruthless') return;
     if(tab.url=='chrome://newtab/') {
       return;
     }
-    console.log("testing")
-    console.log(await testFunction())
+
     if (!isUrlBlacklisted(tab.url)) return;
     try { if (tab && tab.id) await chrome.tabs.remove(tab.id); }
     catch (e) { console.error(e); }

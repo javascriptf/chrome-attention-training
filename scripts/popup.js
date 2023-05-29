@@ -8,7 +8,8 @@ import {
   getClientTimeZone, 
   checkIfTimeHasFinished, 
   toggleDefaultList,
-  DEFAULT_BLACKLIST
+  DEFAULT_BLACKLIST,
+  getToggleDefaultList
 } from './common.js';
 
 
@@ -25,6 +26,7 @@ async function main() {
   
   var mode = await getMode();
   var blockList = await getBlockList()
+  var toggleDefaultChecked = await getToggleDefaultList()
 
   var btnMode = document.querySelector('#modeToggle');
   var btnShowBL = document.querySelector('#show-bl-btn')
@@ -32,19 +34,20 @@ async function main() {
   var toggleAddDefault = document.querySelector('#toggleAddDefault')
   var textBLItem = document.querySelector('#bl-item')
 
-  btnMode.checked = (mode === 'ruthless')
+  btnMode.textContent = (mode==='ruthless') ? "Stop" : "Start Blocking"
+  toggleAddDefault.checked = toggleDefaultChecked
   // var buttonGetDate = document.querySelector('#get-date')
-  // buttonMode.textContent = mode.toUpperCase();
 
   btnMode.addEventListener('click', async () => {
     // Toggle focus mode.
     var mode = await getMode();
-    if(btnMode.checked){
-      mode = 'ruthless'
+    if(mode==='ruthless'){
+      mode = 'disbaled'
     }else{
-      mode = 'disabled'
+      mode = 'ruthless'
     }
-    // buttonMode.textContent = mode.toUpperCase();
+    btnMode.textContent = (mode==='ruthless') ? "Stop" : "Start Blocking";
+    
     await setMode(mode);
     // Close blacklisted tabs.
     if (mode!=='ruthless') return;

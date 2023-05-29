@@ -182,7 +182,7 @@ export async function isUrlBlacklisted(url) {
   var {protocol, hostname} = new URL(url);
   var hostname = hostname.replace(/^www\./, '');
   if (!protocol.startsWith('http')) return false;
-  if (searchWildcardList(DEFAULT_WHITELIST, hostname) >= 0) return false;
+  // if (searchWildcardList(DEFAULT_WHITELIST, hostname) >= 0) return false;
   if (searchWildcardList(blockList.list, hostname) >= 0) return true;
   return false;
 }
@@ -215,10 +215,12 @@ export async function toggleDefaultList(isSet){
   await chrome.storage.local.set({add_default: isSet})
 }
 
-// let defaultToggle = await chrome.storage.local.get('add_default')
-// if(!defaultToggle.add_default){
-//   await clearBlockList()
-// }
+// get add_default value for checked prop
+export async function getToggleDefaultList(){
+  let isSet = await chrome.storage.local.get('add_default')
+  return isSet.add_default
+}
+
 
 // Adds item to list property of local storage
 export async function addBlockList(item) {
@@ -249,7 +251,13 @@ async function createBlockList(list){
   return list
 } 
 
+// TestFunction
+// export async function testFunction(){
+//   let list = await chrome.storage.local.get('list')
+//   let isSEt = await chrome.storage.local.get('add_default')
 
+//   return [...list.list,isSEt.add_default]
+// }
 
 // !!!! -----?>>>>>>>
 
