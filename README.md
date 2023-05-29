@@ -38,4 +38,4 @@ Helps you remain focused on a topic of study for extended periods.
 - [Whistle free icon : flatart_icons](https://www.flaticon.com/free-icon/whistle_3271746)
 
 
-[download]: https://github.com/wolfram77/chrome-attention-training/releases/download/v0.1/chrome-attention-training.crx
+[download]: https://github.com/wolfram77/chrome-attention-training/releases/download/v0.2/chrome-attention-training.crx

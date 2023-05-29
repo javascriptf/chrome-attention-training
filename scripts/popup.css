@@ -211,7 +211,7 @@ input:checked + .slider:before {
   border-color: var(--group-border-focus);
 }
 
-#add-bl{
+#bl-add{
   display: none;
 }
 

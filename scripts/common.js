@@ -11,8 +11,9 @@ export const HTTPS = [
 /** Default config. */
 export const DEFAULT_CONFIG = {
   mode: 'disabled',
-  list: [],
-  add_default: false
+  whitelist: [],
+  blacklist: [],
+  useDefault: true,
 };
 
 
@@ -158,9 +159,12 @@ function searchWildcardList(list, value) {
   for (var i=0, I=list.length; i<I; ++i) {
     var el = list[i];
     if (!/[*?]/.test(el)) continue;
-    var el = el.replace(/\./g, '\\.');
-    var el = el.replace(/\*/g, '.*?');
-    var el = el.replace(/\?/g, '.');
+    var el = el.replace(/([\.\*\?])/g, m => {
+      if (m=='.') return '\\.';
+      if (m=='*') return '.*?';
+      if (m=='?') return '.';
+      return m;
+    });
     var re = new RegExp(el);
     if (re.test(value)) return i;
   }
@@ -169,24 +173,22 @@ function searchWildcardList(list, value) {
 
 
 /**
- * Examine if the url is blacklisted.
+ * Examine if the url is in a list.
  * @param {string} url url string
- * @returns {boolean} true if blacklisted, false otherwise
+ * @param {string[]} whitelist whitelist
+ * @param {string[]} blacklist blacklist
+ * @param {boolean} useDefault use default lists?
+ * @returns {boolean} true if url is blacklisted, false otherwise
  */
-export async function isUrlBlacklisted(url) {
+export function isUrlBlacklisted(url, whitelist, blacklist, useDefault) {
   if (!url) return false;
-  let blockList = await chrome.storage.local.get('list')
-
-  blockList.list = await createBlockList(blockList.list)
-
-  var {protocol, hostname} = new URL(url);
-  var hostname = hostname.replace(/^www\./, '');
-  if (!protocol.startsWith('http')) return false;
-  // if (searchWildcardList(DEFAULT_WHITELIST, hostname) >= 0) return false;
-  if (searchWildcardList(blockList.list, hostname) >= 0) return true;
+  var hostname = new URL(url).hostname.replace(/^www\./, '');
+  if (searchWildcardList(whitelist, hostname) >= 0) return false;
+  if (searchWildcardList(blacklist, hostname) >= 0) return true;
+  if (useDefault && searchWildcardList(DEFAULT_WHITELIST, hostname) >= 0) return false;
+  if (useDefault && searchWildcardList(DEFAULT_BLACKLIST, hostname) >= 0) return true;
   return false;
 }
-
 
 
 /**
@@ -207,77 +209,65 @@ export async function getMode() {
 export async function setMode(mode) {
   await chrome.storage.local.set({mode});
 }
-// #endregion
 
 
-// Toggle add Deafult list to blocklist. Sets add_default to isSet and clears 
-export async function toggleDefaultList(isSet){
-  await chrome.storage.local.set({add_default: isSet})
-}
-
-// get add_default value for checked prop
-export async function getToggleDefaultList(){
-  let isSet = await chrome.storage.local.get('add_default')
-  return isSet.add_default
+/**
+ * Fetch whitelist and blacklist.
+ * @returns {Promise<{whitelist: string[], blacklist: string[], useDefaultList: boolean}>} lists
+ */
+export async function getLists() {
+  var c = await chrome.storage.local.get(['whitelist', 'blacklist', 'useDefault']);
+  return Object.assign({}, DEFAULT_CONFIG, c);
 }
 
 
-// Adds item to list property of local storage
-export async function addBlockList(item) {
-  let list = await getBlockList()
-  list.push(item)
-  await chrome.storage.local.set({list})
+/**
+ * Update whitelist and blacklist.
+ * @param {string[]} whitelist whitelist
+ * @param {string[]} blacklist blacklist
+ * @param {boolean} useDefault use default lists?
+ * @returns {Promise<void>}
+ */
+export async function setLists(whitelist, blacklist, useDefault) {
+  await chrome.storage.local.set({whitelist, blacklist, useDefault});
 }
 
-// retrieves list property from local storage
-export async function getBlockList() {
-  let blocklist = await chrome.storage.local.get('list')
-  return blocklist.list || DEFAULT_CONFIG.list
+
+/**
+ * Fetch whether to use default lists.
+ * @param {boolean} useDefault use default lists?
+ * @returns {Promise<void>}
+ */
+export async function setUseDefault(useDefault) {
+  await chrome.storage.local.set({useDefault});
 }
 
-// clears list property from local storage
-export async function clearBlockList(){
-  let list = []
-  await chrome.storage.local.set({list})
+
+/**
+ * Get the current system date.
+ * @returns {Promise<Date>} system date
+ */
+export function getSystemDate() {
+  return new Date();
 }
 
-// Whenever add default list toggle is on, add default blocklist to list from storage
-//  and then run isUrlBlacklisted
-async function createBlockList(list){
-  let defaultToggle = await chrome.storage.local.get('add_default')
-  if(defaultToggle.add_default){
-    list = [...list,...DEFAULT_BLACKLIST]
-  }
-  return list
-} 
 
-// TestFunction
-// export async function testFunction(){
-//   let list = await chrome.storage.local.get('list')
-//   let isSEt = await chrome.storage.local.get('add_default')
-
-//   return [...list.list,isSEt.add_default]
-// }
-
-// !!!! -----?>>>>>>>
-
-export async function getClientTimeZone(){
-  return new Date()
-}
-
-export async function checkIfTimeHasFinished(currentTime){
-  let internetTime
-
-  var val = fetch('http://worldtimeapi.org/api/ip')
-  .then(response => response.json())
-  .then(data => {
-    internetTime = new Date(data.datetime);
-    return internetTime
-    console.log('Current time:', internetTime);
-  })
-  .catch(error => {
-    console.error('Error:', error);
+/**
+ * Fetch the current internet date.
+ * @returns {Promise<Date>} internet date
+ */
+export function getInternetDate() {
+  return new Promise((resolve, reject) => {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'http://worldtimeapi.org/api/ip');
+    xhr.onload = () => {
+      if (xhr.status>=200 && xhr.status<300) {
+        var data = JSON.parse(xhr.responseText);
+        resolve(new Date(data.datetime));
+      } else reject(new Error(xhr.statusText));
+    };
+    xhr.onerror = () => reject(new Error(xhr.statusText));
+    xhr.send();
   });
-
-  return val
 }
+// #endregion

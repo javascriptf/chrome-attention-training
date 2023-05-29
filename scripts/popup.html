@@ -14,28 +14,18 @@
 
 
 <!-- #region BODY -->
-
 <body>
-
   <div class="main">
-   
-
-    
-
-    
-
     <!-- <div class="form-group">
       <label>Blocking</label>
       <label class="switch">
-        <input type="checkbox" id="modeToggle">
+        <input type="checkbox" id="mode">
         <span class="slider round"></span>
       </label>
     </div> -->
-
     <div>
       <!-- <button class="" id="start-session">Start Session</button> -->
     </div>
-
   </div>
   <!-- <button id="get-date">Get DATE</button> -->
   <div class="card">
@@ -53,7 +43,7 @@
       </div>
       <div class="content">
         <span class="title">Surf Board</span>
-        <p class="message">Manage and control your surfing patterns on web.</p>
+        <p class="message">Manage and control your surfing patterns on the web.</p>
       </div>
       <hr>
       <div class="section">
@@ -61,37 +51,37 @@
           <p class="heading">Add to Blocklist</p>
           <div class="form-group">
             <span>https://www.</span>
-            <input class="form-field" id="bl-item" type="text" placeholder="hostname">
+            <input id="bl-item" class="form-field" type="text" placeholder="hostname">
           </div>
-          <button id="add-bl">Add to Blocklist</button>
+          <button id="bl-add">Add to Blocklist</button>
         </div>
         <div class="settings-section">
           <div class="form-group">
-            <p class="heading">Add Default List</p>
+            <p class="heading">Use Default Lists</p>
             <div class="toggle-switch">
             <label class="switch">
-              <input type="checkbox" id="toggleAddDefault">
+              <input type="checkbox" id="use-default">
               <span class="slider round"></span>
             </label>
           </div>
           </div>
             <div class="see-blocklist-section">
-              <button id="show-bl-btn">See Blocklist</button>
+              <button id="bl-show">See Blocklist</button>
               <ul id="bl">
               </ul>
             </div>
           <div class="set-timer">
-    
+
           </div>
         </div>
       </div>
       <div class="actions">
-        <button class="block" type="button" id="modeToggle">Start Blocking</button>
+        <button id="mode" class="block" type="button">Start Blocking</button>
         <!-- <button class="track" type="button">Track my package</button> -->
       </div>
     </div>
   </div>
-  <!-- <button id="modeToggle">DISABLED</button> -->
+  <!-- <button id="mode">DISABLED</button> -->
 
 
   <script src="./popup.js" type="module"></script>
