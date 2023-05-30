@@ -63,15 +63,27 @@
               <input type="checkbox" id="use-default">
               <span class="slider round"></span>
             </label>
+            </div>
           </div>
-          </div>
-            <div class="see-blocklist-section">
+          <div class="see-blocklist-section">
               <button id="bl-show">See Blocklist</button>
               <ul id="bl">
               </ul>
-            </div>
+          </div>
           <div class="set-timer">
-
+            <div class="slider-bar">
+              <label for="fader">Volume </label>
+              <input type="range" min="0" max="100" value="50" id="fader" 
+              step="20" list="volsettings">
+              <datalist id="volsettings">
+              <option>0</option>
+              <option>20</option>
+              <option>40</option>
+              <option>60</option>
+              <option>80</option>
+              <option>100</option>
+              </datalist>
+              </div>
           </div>
         </div>
       </div>

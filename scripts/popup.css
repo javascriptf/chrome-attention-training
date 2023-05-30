@@ -373,3 +373,37 @@ hr{
     transform: scale(1.09);
   }
 }
+
+.set-timer{
+  position: relative;
+}
+
+.slider-bar{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+  width: 500px;
+  height: 60px;
+  padding: 30px;
+  padding-left: 40px;
+  background: #fcfcfc;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0px 15px 40px #7E6D5766;
+  }
+  .slider-bar label {
+  font-size: 24px;
+  font-weight: 400;
+  font-family: Open Sans;
+  padding-left: 10px;
+  color: black;
+  }
+  .slider-bar input[type="range"] {
+  width: 420px;
+  height: 2px;
+  background: black;
+  border: none;
+  outline: none;
+  }
