@@ -1,11 +1,11 @@
 import {
   HTTPS,
   isUrlBlacklisted,
-  getMode,
-  setMode,
-  getLists,
-  setLists,
-  setUseDefault,
+  readMode,
+  writeMode,
+  readLists,
+  writeLists,
+  writeUseDefault,
 } from './common.js';
 
 
@@ -45,8 +45,8 @@ async function closeBlacklistedTabs(whitelist, blacklist, useDefault) {
  * @returns {Promise<void>}
  */
 async function main() {
-  var mode = await getMode();
-  var {whitelist, blacklist, useDefault} = await getLists();
+  var mode = await readMode();
+  var {whitelist, blacklist, useDefault} = await readLists();
   var xmode    = document.querySelector('#mode');
   var xbl      = document.querySelector('#bl');
   var xblShow  = document.querySelector('#bl-show');
@@ -60,12 +60,12 @@ async function main() {
 
   // Toggle focus mode.
   xmode.addEventListener('click', async () => {
-    var mode = await getMode();
+    var mode = await readMode();
     // Udapte popup view.
     mode = mode==='ruthless'? 'disabled' : 'ruthless';
     xmode.textContent = mode==='ruthless'? 'Stop' : 'Start Blocking';
     // Set mode, and close all blacklisted tabs.
-    await setMode(mode);
+    await writeMode(mode);
     if (mode==='ruthless') closeBlacklistedTabs(whitelist, blacklist, useDefault);
   });
 
@@ -74,7 +74,7 @@ async function main() {
     var item = xblItem.value;
     xblItem.value = '';
     if (!blacklist.includes(item)) blacklist.push(item);
-    setLists({whitelist, blacklist, useDefault});
+    writeLists({whitelist, blacklist, useDefault});
   })
 
   // Show blacklist.
@@ -96,7 +96,7 @@ async function main() {
 
   // Use default list?
   xuseDefault.addEventListener('click', async () => {
-    setUseDefault(xuseDefault.checked);
+    writeUseDefault(xuseDefault.checked);
   })
 
   // buttonGetDate.addEventListener('click', async ()=> {
