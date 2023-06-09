@@ -1,0 +1,15 @@
+# SHOPPING
+# --------
+
+amazon.com
+ebay.com
+craigslist.org
+walmart.com
+target.com
+bestbuy.com
+apple.com
+microsoft.com
+
+
+# REFERENCES
+# - https://www.similarweb.com/top-websites/arts-and-entertainment/

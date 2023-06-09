@@ -1,0 +1,9 @@
+# EVENT MANAGEMENT
+# ----------------
+
+bookmyshow.com
+meetup.com
+
+
+# REFERENCES
+# - https://www.similarweb.com/top-websites/arts-and-entertainment/

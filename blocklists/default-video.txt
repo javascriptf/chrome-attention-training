@@ -1,0 +1,40 @@
+# VIDEO STREAMING
+# ---------------
+
+tiktok.com
+youtube.com
+netflix.com
+bilibili.com
+fandom.com
+disneyplus.com
+aparat.com
+zoro.to
+9animetv.to
+jiocinema.com
+hbomax.com
+hotstar.com
+primevideo.com
+miguvideo.com
+worldstar.com
+hulu.com
+nicovideo.jp
+rumble.com
+animeflv.net
+xfinity.com
+dailymotion.com
+nhk.or.jp
+9anime.to
+crunchyroll.com
+soap2day.to
+tenki.jp
+programme-tv.net
+tapmad.com
+fandomwire.com
+mediaset.it
+fmovies.to
+vimeo.com
+vine.co
+
+
+# REFERENCES
+# - https://www.similarweb.com/top-websites/arts-and-entertainment/

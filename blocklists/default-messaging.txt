@@ -1,0 +1,11 @@
+# MESSAGING
+# ---------
+
+whatsapp.com
+telegram.org
+discord.com
+snapchat.com
+
+
+# REFERENCES
+# - https://www.similarweb.com/top-websites/arts-and-entertainment/
