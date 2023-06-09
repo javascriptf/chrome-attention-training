@@ -12,7 +12,10 @@
     "http://*/*",
     "https://*/*"
   ],
-  "web_accessible_resources": ["blocklists/*"],
+  "web_accessible_resources": [{
+    "resources": ["blocklists/*"],
+    "matches": ["*://*/*"]
+  }],
   "action": {
     "default_popup": "scripts/popup.html"
   },

@@ -2,6 +2,9 @@ import {
   isUrlBlacklisted,
   readMode,
   readLists,
+  importBlocklist,
+  readBlocklistEntriesMap,
+  selectBlocklist,
 } from './common.js';
 
 
@@ -38,6 +41,9 @@ async function main() {
     try { chrome.tabs.remove(tabId).then(() => console.log(`main(): Closed tab ${tab.url}`)); }
     catch (err) { console.error(err); }
   });
+  var icon = chrome.runtime.getURL('icons/128.png');
+  await importBlocklist('Default', icon, 'default');
+  await selectBlocklist('default');
 }
 main();
 // #endregion
