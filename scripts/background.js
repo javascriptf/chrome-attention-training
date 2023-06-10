@@ -32,18 +32,19 @@ async function main() {
   // When a tab is updated, check if it is blacklisted, and close it if so.
   chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
     if (changeInfo.status!=='complete') return;
-    var mode = await readMode();
+    var c = await chrome.storage.session.get(['mode', 'paused', 'started']);
+    if (!c.started || c.paused) return;
     var tab  = await chrome.tabs.get(tabId);
     if (!tab || !tab.url || RNOTWEB.test(tab.url)) return;
-    if (mode!=='ruthless') return;
-    var {whitelist, blacklist, useDefault} = await readLists();
-    if (!isUrlBlacklisted(tab.url, whitelist, blacklist, useDefault)) return;
+    var {whitelist, blacklist} = await readLists();
+    if (!isUrlBlacklisted(tab.url, whitelist, blacklist)) return;
     try { chrome.tabs.remove(tabId).then(() => console.log(`main(): Closed tab ${tab.url}`)); }
     catch (err) { console.error(err); }
   });
   var icon = chrome.runtime.getURL('icons/128.png');
   await importBlocklist('Default', icon, 'default');
-  await selectBlocklist('default');
+  await importBlocklist('Main'   , icon, 'main');
+  await selectBlocklist('main');
 }
 main();
 // #endregion

@@ -1,91 +1,61 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <!-- #region HEAD -->
-
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="./popup.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+  <link rel="stylesheet" href="popup.css">
+  <title>Attention training</title>
 </head>
 <!-- #endregion -->
 
 
-
-
 <!-- #region BODY -->
 <body>
-  <div class="main">
-    <!-- <div class="form-group">
-      <label>Blocking</label>
-      <label class="switch">
-        <input type="checkbox" id="mode">
-        <span class="slider round"></span>
-      </label>
-    </div> -->
-    <div>
-      <!-- <button class="" id="start-session">Start Session</button> -->
-    </div>
-  </div>
-  <!-- <button id="get-date">Get DATE</button> -->
-  <div class="card">
-    <!-- <button class="dismiss" type="button">×</button> -->
-    <div class="header">
-      <div class="image">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
-          <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>
-          <g id="SVGRepo_iconCarrier">
-            <path d="M20 7L9.00004 18L3.99994 13" stroke="#000000" stroke-width="1.5" stroke-linecap="round"
-              stroke-linejoin="round"></path>
-          </g>
-        </svg>
-      </div>
-      <div class="content">
-        <span class="title">Surf Board</span>
-        <p class="message">Manage and control your surfing patterns on the web.</p>
-      </div>
-      <hr>
-      <div class="section">
-        <div class="add-new-section">
-          <p class="heading">Add to Blocklist</p>
-          <div class="form-group">
-            <span>https://www.</span>
-            <input id="bl-item" class="form-field" type="text" placeholder="hostname">
-          </div>
-          <button id="bl-add">Add to Blocklist</button>
-        </div>
-        <div class="settings-section">
-          <div class="form-group">
-            <p class="heading">Use Default Lists</p>
-            <div class="toggle-switch">
-            <label class="switch">
-              <input type="checkbox" id="use-default">
-              <span class="slider round"></span>
-            </label>
-          </div>
-          </div>
-            <div class="see-blocklist-section">
-              <button id="bl-show">See Blocklist</button>
-              <ul id="bl">
-              </ul>
-            </div>
-          <div class="set-timer">
-
-          </div>
-        </div>
-      </div>
-      <div class="actions">
-        <button id="mode" class="block" type="button">Start Blocking</button>
-        <!-- <button class="track" type="button">Track my package</button> -->
-      </div>
-    </div>
-  </div>
-  <!-- <button id="mode">DISABLED</button> -->
-
-
-  <script src="./popup.js" type="module"></script>
-</body>
+<!-- #region HEADER -->
+<nav class="container-fluid">
+  <ul>
+    <li><a href="#"><img src="../icons/128.png" focusable="false" role="img"></a></li>
+    <li>Attention training</li>
+  </ul>
+  <ul>
+    <li>Cadet</li>
+    <li>20.1k</li>
+  </ul>
+</nav>
 <!-- #endregion -->
 
+
+<!-- #region MAIN -->
+<main class="container-fluid">
+<form>
+  <details role="list" id="mode">
+    <summary aria-haspopup="listbox" data-value="">Focus mode</summary>
+    <ul role="listbox">
+      <li><a data-value="40">Measure</a></li>
+      <li><a data-value="30">Enabled</a></li>
+      <li><a data-value="20">Professional</a></li>
+      <li><a data-value="10">Legendary</a></li>
+    </ul>
+  </details>
+  <input type="text" id="duration" placeholder="Duration, e.g., 20 min 30 sec">
+  <div class="grid-2">
+    <a role="button" href="#" id="pause" class="secondary">Pause</a>
+    <a role="button" href="#" id="start" class="contrast">Start</a>
+  </div>
+  <div class="grid-2" hidden>
+    <div class="box">22.2 min</div>
+    <div class="box">22.2 pts</div>
+  </div>
+  <button>Update blocklist</button>
+  <textarea id="blocklist" cols="30" rows="8"></textarea>
+</form>
+</main>
+<!-- #endregion -->
+
+
+<script src="popup.js" type="module"></script>
+</body>
+<!-- #endregion -->
 </html>

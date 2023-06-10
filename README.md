@@ -39,6 +39,7 @@ Helps you remain focused on a topic of study for extended periods.
 - [How to block a website when you’re distracted and need to focus : Robby Macdonell](https://blog.rescuetime.com/getting-the-most-out-of-rescuetimes-website-blocking/)
 - [Attention span - Wikipedia](https://en.wikipedia.org/wiki/Attention_span)
 - [Whistle free icon : flatart_icons](https://www.flaticon.com/free-icon/whistle_3271746)
+- [Perfectly looped GIFs: how to create them - Jitter](https://blog.jitter.video/perfectly-looped-gifs/)
 - [RegExr : gskinner](https://regexr.com/)
 
 

@@ -1,0 +1,18 @@
+# Let's block a site
+apple.com
+
+# Or
+# - apple.com
+
+# Now, let's allow a site
++ google.com
+
+# Let's block sites using the default list
+! default
+
+# You can also block using default sub-lists
+# ! default-video
+# ! default-social
+
+# You can also block sites using custom lists
+# ! https://raw.githubusercontent.com/javascriptf/chrome-attention-training/main/blocklists/default-gaming.txt

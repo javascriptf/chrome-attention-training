@@ -1,12 +1,22 @@
 import {
-  HTTPS,
-  isUrlBlacklisted,
-  readMode,
-  writeMode,
+  closeBlacklistedTabs,
+  readBlocklistEntriesMap,
   readLists,
-  writeLists,
-  writeUseDefault,
 } from './common.js';
+
+
+
+
+// #region CONSTANTS
+// =================
+
+const EMODE      = document.getElementById('mode');
+const EDURATION  = document.getElementById('duration');
+const EPAUSE     = document.getElementById('pause');
+const ESTART     = document.getElementById('start');
+const EBLOCKLIST = document.getElementById('blocklist');
+const MODE_NAMES = new Map();
+// #endregion
 
 
 
@@ -14,98 +24,79 @@ import {
 // #region METHODS
 // ===============
 
-/**
- * Close all blacklisted tabs.
- * @param {string[]} whitelist whitelist
- * @param {string[]} blacklist blacklist
- * @param {boolean} useDefault use default lists?
- * @returns {Promise<void>}
- */
-async function closeBlacklistedTabs(whitelist, blacklist, useDefault) {
-  var blacklistedTabs = [], whitelistedTab = null;
-  var tabs = await chrome.tabs.query({url: HTTPS});
-  for (var tab of tabs) {
-    if (isUrlBlacklisted(tab.url, whitelist, blacklist, useDefault)) blacklistedTabs.push(tab);
-    else whitelistedTab = tab;
-  }
-  if (blacklistedTabs.length===0) return;
-  // If there is no whitelisted tab, create one.
-  if (!whitelistedTab) whitelistedTab = chrome.tabs.create({});
-  chrome.tabs.update(whitelistedTab.id, {active: true});
-  // Close all blacklisted tabs.
-  for (let tab of blacklistedTabs) {
-    try { if (tab && tab.id) chrome.tabs.remove(tab.id).then(() => console.log(`closeBlacklistedTabs(): Closed tab ${tab.url}`)); }
-    catch (err) { console.error(err); }
+// Enable selection of values in dropdowns.
+function initDropdown() {
+  var dropdowns = document.querySelectorAll('details[role="list"]');
+  for (let dropdown of dropdowns) {
+    let summary = dropdown.querySelector('summary');
+    let ul      = dropdown.querySelector('ul');
+    ul.addEventListener('click', e => {
+      var value = e.target.getAttribute('data-value');
+      summary.textContent = e.target.textContent;
+      dropdown.setAttribute('data-value', value);
+      dropdown.removeAttribute('open');
+      dropdown.dispatchEvent(new Event('change'));
+    });
   }
 }
 
 
-/**
- * Main function.
- * @returns {Promise<void>}
- */
+// Initialize menu, and handle menu events.
+function initMenu(c) {
+  for (var li of EMODE.querySelectorAll('li')) {
+    var value = li.getAttribute('data-value');
+    MODE_NAMES.set(value, li.textContent);
+  }
+  if (c.mode) {
+    EMODE.setAttribute('data-value', c.mode);
+    summary.textContent = MODE_NAMES.get(c.mode);
+  }
+  EMODE.addEventListener('change', () => {
+    c.mode = EMODE.getAttribute('data-value');
+    chrome.storage.session.set({mode: c.mode});
+  });
+  EPAUSE.addEventListener('click', () => {
+    c.paused = !c.paused;
+    chrome.storage.session.set({paused: c.paused});
+    updateMenu(c);
+  });
+  ESTART.addEventListener('click', async () => {
+    c.started = !c.started;
+    if (!c.started) c.paused = false;
+    chrome.storage.session.set({started: c.started, paused: c.paused});
+    updateMenu(c);
+    var {whitelist, blacklist} = await readLists();
+    closeBlacklistedTabs(whitelist, blacklist);
+  });
+  updateMenu(c);
+}
+
+
+// Update menu based on current state.
+function updateMenu(c) {
+  if (c.started) {
+    EDURATION.disabled = !c.paused;
+    EPAUSE.disabled = false;
+    EPAUSE.textContent = c.paused? 'Resume' : 'Pause';
+    ESTART.textContent = 'Stop';
+  }
+  else {
+    EDURATION.disabled = false;
+    EPAUSE.disabled = true;
+    EPAUSE.textContent = 'Pause';
+    ESTART.textContent = 'Start';
+  }
+  EBLOCKLIST.textContent = c.blocklist.text;
+}
+
+
+// Main function.
 async function main() {
-  var mode = await readMode();
-  var {whitelist, blacklist, useDefault} = await readLists();
-  var xmode    = document.querySelector('#mode');
-  var xbl      = document.querySelector('#bl');
-  var xblShow  = document.querySelector('#bl-show');
-  var xblAdd   = document.querySelector('#bl-add');
-  var xblItem  = document.querySelector('#bl-item');
-  var xuseDefault = document.querySelector('#use-default');
-  // var xdateGet = document.querySelector('#date-get')
-  // Setup popup view.
-  xmode.textContent   = mode==='ruthless'? 'Stop' : 'Start Blocking';
-  xuseDefault.checked = useDefault;
-
-  // Toggle focus mode.
-  xmode.addEventListener('click', async () => {
-    var mode = await readMode();
-    // Udapte popup view.
-    mode = mode==='ruthless'? 'disabled' : 'ruthless';
-    xmode.textContent = mode==='ruthless'? 'Stop' : 'Start Blocking';
-    // Set mode, and close all blacklisted tabs.
-    await writeMode(mode);
-    if (mode==='ruthless') closeBlacklistedTabs(whitelist, blacklist, useDefault);
-  });
-
-  // Add item to blacklist.
-  xblAdd.addEventListener('click', () => {
-    var item = xblItem.value;
-    xblItem.value = '';
-    if (!blacklist.includes(item)) blacklist.push(item);
-    writeLists({whitelist, blacklist, useDefault});
-  })
-
-  // Show blacklist.
-  xblShow.addEventListener('click', () => {
-    xbl.innerHTML = '';
-    for (var item of blacklist) {
-      var li = document.createElement('li');
-      li.innerText = item;
-      xbl.appendChild(li);
-    }
-  });
-
-  // Add item to blacklist.
-  xblItem.addEventListener('keyup', event => {
-    event.preventDefault();
-    // On enter, add item to blacklist.
-    if (event.keyCode===13) xblAdd.click();
-  });
-
-  // Use default list?
-  xuseDefault.addEventListener('click', async () => {
-    writeUseDefault(xuseDefault.checked);
-  })
-
-  // buttonGetDate.addEventListener('click', async ()=> {
-  //   var cdate = await getClientTimeZone()
-  //   var haspassed = await checkIfTimeHasFinished(cdate.getTime())
-  //   console.log(cdate.getTime())
-  //   console.log("from internet")
-  //   console.log(haspassed.getTime())
-  // });
+  var c = await chrome.storage.session.get(['mode', 'started', 'paused']);
+  var b = await readBlocklistEntriesMap(['main']);
+  c.blocklist = b.main;
+  initDropdown();
+  initMenu(c);
 }
 main();
 // #endregion

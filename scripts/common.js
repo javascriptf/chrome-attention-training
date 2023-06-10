@@ -17,6 +17,7 @@
 /**
  * Defines a list of URLs to be blocked.
  * @typedef {object} BlocklistEntries
+ * @property {string} text plain text
  * @property {string[]} exclude URLs to exlude
  * @property {string[]} include URLs to include
  * @property {string[]} sublists sublists (url)
@@ -404,7 +405,7 @@ export async function flattenBlocklistEntries(blocklists) {
   var include  = new Set();
   var sublists = new Set();
   await flattenBlocklistEntriesTo(exclude, include, sublists, blocklists);
-  return {exclude: [...exclude], include: [...include], sublists: [...sublists]};
+  return {text: '', exclude: [...exclude], include: [...include], sublists: [...sublists]};
 }
 
 async function flattenBlocklistEntriesTo(exclude, include, sublists, blocklists) {
@@ -443,7 +444,7 @@ export async function fetchBlocklistEntries(url) {
     else if (line.startsWith('-')) include.push(rest);
     else                           include.push(line);
   }
-  return {exclude, include, sublists};
+  return {text, exclude, include, sublists};
 }
 // #endregion
 
@@ -605,6 +606,37 @@ export function getSystemDate() {
 export async function fetchInternetDate() {
   var x = await (await fetch('http://worldtimeapi.org/api/ip')).json();
   return new Date(x.datetime);
+}
+// #endregion
+
+
+
+
+// #region TABS
+// ------------
+
+/**
+ * Close all blacklisted tabs.
+ * @param {string[]} whitelist whitelist
+ * @param {string[]} blacklist blacklist
+ * @returns {Promise<void>}
+ */
+export async function closeBlacklistedTabs(whitelist, blacklist) {
+  var blacklistedTabs = [], whitelistedTab = null;
+  var tabs = await chrome.tabs.query({url: HTTPS});
+  for (var tab of tabs) {
+    if (isUrlBlacklisted(tab.url, whitelist, blacklist)) blacklistedTabs.push(tab);
+    else whitelistedTab = tab;
+  }
+  if (blacklistedTabs.length===0) return;
+  // If there is no whitelisted tab, create one.
+  if (!whitelistedTab) whitelistedTab = chrome.tabs.create({});
+  chrome.tabs.update(whitelistedTab.id, {active: true});
+  // Close all blacklisted tabs.
+  for (let tab of blacklistedTabs) {
+    try { if (tab && tab.id) chrome.tabs.remove(tab.id).then(() => console.log(`closeBlacklistedTabs(): Closed tab ${tab.url}`)); }
+    catch (err) { console.error(err); }
+  }
 }
 // #endregion
 // #endregion
