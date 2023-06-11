@@ -70,6 +70,7 @@ export const HTTPS = [
 
 /** Default config. */
 export const DEFAULT_CONFIG = {
+  bounty: 0,
   whitelist: [],
   blacklist: [],
   blocklistMap: {},
@@ -108,6 +109,32 @@ export async function messageRuntime(msg) {
     catch (e) { err = e; await sleep(100); }
   }
   throw err;
+}
+// #endregion
+
+
+
+
+// #region BOUNTY
+// --------------
+
+/**
+ * Read bounty from local storage.
+ * @returns {Promise<number>} bounty
+ */
+export async function readBounty() {
+  var c = await chrome.storage.local.get('bounty');
+  return c.bounty || DEFAULT_CONFIG.bounty;
+}
+
+
+/**
+ * Write bounty to local storage.
+ * @param {number} bounty bounty
+ * @returns {Promise<void>}
+ */
+export async function writeBounty(bounty) {
+  await chrome.storage.local.set({bounty});
 }
 // #endregion
 

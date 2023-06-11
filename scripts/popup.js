@@ -1,5 +1,6 @@
 import {
   messageRuntime,
+  writeBounty,
   readBlocklistEntriesMap,
 } from './common.js';
 
@@ -9,8 +10,12 @@ import {
 // #region CONSTANTS
 // =================
 
-// Controls.
+// Navigation.
 const HTML        = document.documentElement;
+const RANK        = document.getElementById('rank');
+const BOUNTY      = document.getElementById('bounty');
+
+// Controls.
 const CONTROLS    = document.getElementById('controls');
 const COMODE      = document.getElementById('comode');
 const CODURATION  = document.getElementById('coduration');
@@ -30,12 +35,39 @@ const BLHIDE    = document.getElementById('blhide');
 const BLUPDATE  = document.getElementById('blupdate');
 const BLTEXT    = document.getElementById('bltext');
 
+// Ranks.
+const RANKS = [
+  'Cadet',
+  'Cadet II',
+  'Officer',
+  'Officer II',
+  'Patrolman',
+  'Patrolman II',
+  'Patrolman III',
+  'Trooper',
+  'Trooper II',
+  'Trooper III',
+  'Sergeant',
+  'Sergeant II',
+  'Sergeant III',
+  'Lieutenant',
+  'Lieutenant II',
+  'Lieutenant III',
+  'Undercover',
+  'Captain',
+  'Pursuit Agent',
+  'Ultimate Enforcer',
+];
+
 // Global state (interesting ones only).
 const S = {
   menu: '',
-  mode:      0,
-  duration:  0,
-  startTime: 0,
+  bounty:   0,
+  mode:     0,
+  duration: 0,
+  elapsed:  0,
+  startBounty: 0,
+  startTime:   0,
   paused:  false,
   started: false,
   blocklist: {},
@@ -51,15 +83,73 @@ const S = {
 // #region MAIN
 // -----------
 
+// Stringify duration in milliseconds.
+function stringifyDuration(ms) {
+  var s = Math.floor(ms/1000);
+  var m = Math.floor(s/60); s %= 60;
+  var h = Math.floor(m/60); m %= 60;
+  var d = Math.floor(h/24); h %= 24;
+  var a = '';
+  if (d) a += d + ' day ';
+  if (h) a += h + ' hour ';
+  if (m) a += m + ' min ';
+  if (s) a += s + ' sec ';
+  return a.trim();
+}
+
+
+// Get rank from bounty.
+function getRank(bounty) {
+  var rank = Math.floor(bounty/1000);
+  if (rank >= RANKS.length) rank = RANKS.length - 1;
+  return RANKS[rank];
+}
+
+
+// Stringify bounty.
+function stringifyBounty(bounty) {
+  if (bounty > 1E+6) return (bounty/1E+6).toFixed(1) + 'M';
+  if (bounty > 1E+3) return (bounty/1E+3).toFixed(1) + 'k';
+  return bounty.toString();
+}
+
+
+// Calculate bounty from elapsed time and mode.
+function calculateBounty(elapsed, mode) {
+  var factor = 40/mode;
+  return Math.floor(elapsed*factor/1000);
+}
+
+
 // Read state from session storage.
-async function readState(S) {
-  var c = await chrome.storage.session.get(['menu', 'mode', 'duration', 'startTime', 'paused', 'started']);
-  S.menu      = c.menu || '';
-  S.mode      = c.mode      || 0;
-  S.duration  = c.duration  || 0;
-  S.startTime = c.startTime || 0;
-  S.paused    = c.paused  || false;
-  S.started   = c.started || false;
+async function readState(S, local=false) {
+  var c = await chrome.storage.session.get([
+    'bounty', 'mode', 'duration', 'elapsed', 'startBounty', 'startTime',
+    'paused', 'started'
+  ]);
+  S.bounty   = c.bounty   || (local? await readBounty() : 0);
+  S.mode     = c.mode     || 0;
+  S.duration = c.duration || 0;
+  S.elapsed  = c.elapsed  || 0;
+  S.startBounty = c.startBounty || 0;
+  S.startTime   = c.startTime   || 0;
+  S.paused  = c.paused  || false;
+  S.started = c.started || false;
+}
+
+
+// Write state to session storage.
+async function writeState(S) {
+  await chrome.storage.session.set({
+    bounty:   S.bounty,
+    mode:     S.mode,
+    duration: S.duration,
+    elapsed:  S.elapsed,
+    startTime:   S.startBounty,
+    startTime:   S.startTime,
+    paused:  S.paused,
+    started: S.started,
+  });
 }
 
 
@@ -67,6 +157,18 @@ async function readState(S) {
 async function readBlocklist(S) {
   var {main} = await readBlocklistEntriesMap(['main']);
   S.blocklist = main;
+}
+
+
+// Update elapsed time and bounty accrued.
+async function recordElapsed(S, mode=S.mode) {
+  var elapsed = Date.now() - S.startTime;
+  var bounty  = calculateBounty(elapsed, mode);
+  S.bounty   += bounty;
+  S.elapsed  += elapsed;
+  S.startTime = Date.now();
+  // await writeState(S);
+  await writeBounty(S.bounty);
 }
 
 
@@ -104,26 +206,36 @@ function initMenu(S) {
     updateMenu(S);
   }
   COMODE.addEventListener('change', () => {
+    if (S.started && !S.paused) recordElapsed(S, S.mode);
     S.mode = parseFloat(COMODE.getAttribute('data-value'));
-    chrome.storage.session.set({mode: S.mode});
+    writeState(S);
   });
   COPAUSE.addEventListener('click', e => {
     e.preventDefault();
     S.paused = !S.paused;
-    chrome.storage.session.set({paused: S.paused});
-    if (!S.paused) messageRuntime({type: 'closeBlackTabs'});
+    if (S.paused) recordElapsed(S);
+    else {
+      S.startTime = Date.now();
+      messageRuntime({type: 'closeBlackTabs'});
+    }
+    writeState(S);
     updateMenu(S);
   });
   COSTART.addEventListener('click', e => {
     e.preventDefault();
     S.started = !S.started;
     if (S.started) {
-      S.startTime = Date.now();
-      S.mode = S.mode || 40;
+      S.mode    = S.mode || 40;
+      S.elapsed = 0;
+      S.startBounty = S.bounty;
+      S.startTime   = Date.now();
     }
-    else S.paused = false;
-    chrome.storage.session.set({started: S.started, paused: S.paused, startTime: S.startTime});
+    else {
+      S.paused = false;
+      recordElapsed(S);
+    }
     messageRuntime({type: 'closeBlackTabs'});
+    writeState(S);
     updateMenu(S);
   });
   COBLOCKLIST.addEventListener('click', e => {
@@ -142,6 +254,13 @@ function initMenu(S) {
     S.blocklist.text = BLTEXT.value;
     updateMenu(S);
   });
+  setInterval(() => {
+    if (!S.started || S.paused) return;
+    var elapsed = Date.now() - S.startTime;
+    var bounty  = calculateBounty(elapsed, S.mode);
+    CODURATION.value = stringifyDuration(S.elapsed + elapsed);
+    TRTEXT    .value = stringifyBounty(S.bounty + bounty - S.startBounty) + ' bounty';
+  }, 1000);
   updateMenu(S);
 }
 
@@ -149,6 +268,8 @@ function initMenu(S) {
 // Update menu based on current state.
 function updateMenu(S) {
   var running = S.started && !S.paused;
+  RANK  .textContent = getRank(S.bounty);
+  BOUNTY.textContent = stringifyBounty(S.bounty);
   CONTROLS    .hidden = S.menu!=='';
   BLOCKLIST   .hidden = S.menu!=='blocklist';
   TRACKER     .hidden = !running;
@@ -158,22 +279,9 @@ function updateMenu(S) {
   COPAUSE.textContent =  S.started && S.paused? 'Resume' : 'Pause';
   COSTART.textContent =  S.started? 'Stop' : 'Start';
   BLTEXT .value = S.blocklist.text;
-  console.log(S.mode, MODE_NAMES);
   if (S.mode)  COMODE_TEXT.textContent = MODE_NAMES.get(S.mode);
   if (running) HTML.classList.add   ('running');
   else         HTML.classList.remove('running');
-}
-
-
-// Intialize tracker for activity time and points accrued.
-function initTracker(S) {
-  setInterval(() => {
-    if (!S.started || S.paused) return;
-    var now = Date.now();
-    var elapsed = now - S.startTime;
-    var points  = Math.floor(elapsed / 1000);
-    TRTEXT.value = `${points} pts`;
-  }, 1000);
 }
 
 
@@ -184,7 +292,6 @@ async function main(S) {
   initDropdown();
   initModeNames();
   initMenu(S);
-  initTracker(S);
 }
 main(S);
 // #endregion
