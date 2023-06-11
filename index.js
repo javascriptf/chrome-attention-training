@@ -1,10 +1,16 @@
+// import dotenv from "dotnenv"
+
 const express = require('express')
 const app = express()
-const port = 8080
+
+require('dotenv').config()
+
+const port = process.env.PORT
 
 var db = require('./database.js')
 
 app.use(express.json())
+
 
 app.use("/api/user", require("./routes/userRouter.js"))
 
