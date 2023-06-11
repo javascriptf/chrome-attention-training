@@ -30,7 +30,8 @@
 <!-- #region MAIN -->
 <main class="container-fluid">
 <form>
-  <details role="list" id="mode">
+<fieldset id="controls">
+  <details role="list" id="comode">
     <summary aria-haspopup="listbox" data-value="">Focus mode</summary>
     <ul role="listbox">
       <li><a data-value="40">Measure</a></li>
@@ -39,17 +40,25 @@
       <li><a data-value="10">Legendary</a></li>
     </ul>
   </details>
-  <input type="text" id="duration" placeholder="Duration, e.g., 20 min 30 sec">
+  <input id="coduration" type="text" placeholder="Duration, e.g., 20 min 30 sec">
   <div class="grid-2">
-    <a role="button" href="#" id="pause" class="secondary">Pause</a>
-    <a role="button" href="#" id="start" class="contrast">Start</a>
+    <button id="copause" class="primary">Pause</a>
+    <button id="costart" class="contrast">Start</a>
   </div>
-  <div class="grid-2" hidden>
-    <div class="box">22.2 min</div>
-    <div class="box">22.2 pts</div>
+  <div class="grid-1">
+    <button id="coblocklist" class="secondary">Show blocklist</button>
   </div>
-  <button>Update blocklist</button>
-  <textarea id="blocklist" cols="30" rows="8"></textarea>
+</fieldset>
+<fieldset id="tracker" class="grid-1" hidden>
+  <input id="trtext" type="text" value="0 pts" disabled>
+</fieldset>
+<fieldset id="blocklist" class="grid-1" hidden>
+  <div class="grid-2">
+    <button id="blhide" class="secondary">Hide blocklist</button>
+    <button id="blupdate" class="primary">Update blocklist</button>
+  </div>
+  <textarea id="bltext" cols="30" rows="8"></textarea>
+</fieldset>
 </form>
 </main>
 <!-- #endregion -->

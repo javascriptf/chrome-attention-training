@@ -70,7 +70,6 @@ export const HTTPS = [
 
 /** Default config. */
 export const DEFAULT_CONFIG = {
-  mode: 'disabled',
   whitelist: [],
   blacklist: [],
   blocklistMap: {},
@@ -84,26 +83,31 @@ export const DEFAULT_CONFIG = {
 // #region METHODS
 // ===============
 
-// #region MODE
-// ------------
+// #region UTILITY
+// ---------------
 
 /**
- * Read focus mode config.
- * @returns {Promise<string>} focus mode
+ * Sleep for a number of milliseconds.
+ * @param {number} ms milliseconds to sleep
+ * @returns {Promise<void>}
  */
-export async function readMode() {
-  var c = await chrome.storage.local.get('mode');
-  return c.mode || DEFAULT_CONFIG.mode;
+export async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 
 /**
- * Write focus mode config.
- * @param {string} mode focus mode
- * @returns {Promise<void>}
+ * Send a message to the background script.
+ * @param {any} msg message to send
+ * @returns {Promise<any>} response
  */
-export async function writeMode(mode) {
-  await chrome.storage.local.set({mode});
+export async function messageRuntime(msg) {
+  var err = null;
+  for (var i=0; i<2; ++i) {
+    try { return await chrome.runtime.sendMessage(msg); }
+    catch (e) { err = e; await sleep(100); }
+  }
+  throw err;
 }
 // #endregion
 
@@ -433,6 +437,16 @@ async function flattenBlocklistEntriesTo(exclude, include, sublists, blocklists)
 export async function fetchBlocklistEntries(url) {
   if (!/^https?:/.test(url)) url = chrome.runtime.getURL(`blocklists/${url}.txt`);
   var text = await (await fetch(url)).text();
+  return parseBlocklistEntries(text);
+}
+
+
+/**
+ * Parse blocklist entries from given text.
+ * @param {string} text blocklist text
+ * @returns {BlocklistEntries} blocklist entries
+ */
+export function parseBlocklistEntries(text) {
   var exclude = [], include = [], sublists = [];
   for (var line of text.split(/\r?\n/)) {
     var line = line.trim();
@@ -581,62 +595,6 @@ export async function writeActivityTimesMap(xs) {
 export async function deleteActivityTimes(activities) {
   var keys = activities.map(id => `activityTimes_${id}`);
   await chrome.storage.local.remove(keys);
-}
-// #endregion
-
-
-
-
-// #region TIMER
-// -------------
-
-/**
- * Get the current system date.
- * @returns {Promise<Date>} system date
- */
-export function getSystemDate() {
-  return new Date();
-}
-
-
-/**
- * Fetch the current internet date.
- * @returns {Promise<Date>} internet date
- */
-export async function fetchInternetDate() {
-  var x = await (await fetch('http://worldtimeapi.org/api/ip')).json();
-  return new Date(x.datetime);
-}
-// #endregion
-
-
-
-
-// #region TABS
-// ------------
-
-/**
- * Close all blacklisted tabs.
- * @param {string[]} whitelist whitelist
- * @param {string[]} blacklist blacklist
- * @returns {Promise<void>}
- */
-export async function closeBlacklistedTabs(whitelist, blacklist) {
-  var blacklistedTabs = [], whitelistedTab = null;
-  var tabs = await chrome.tabs.query({url: HTTPS});
-  for (var tab of tabs) {
-    if (isUrlBlacklisted(tab.url, whitelist, blacklist)) blacklistedTabs.push(tab);
-    else whitelistedTab = tab;
-  }
-  if (blacklistedTabs.length===0) return;
-  // If there is no whitelisted tab, create one.
-  if (!whitelistedTab) whitelistedTab = chrome.tabs.create({});
-  chrome.tabs.update(whitelistedTab.id, {active: true});
-  // Close all blacklisted tabs.
-  for (let tab of blacklistedTabs) {
-    try { if (tab && tab.id) chrome.tabs.remove(tab.id).then(() => console.log(`closeBlacklistedTabs(): Closed tab ${tab.url}`)); }
-    catch (err) { console.error(err); }
-  }
 }
 // #endregion
 // #endregion

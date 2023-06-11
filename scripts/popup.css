@@ -1,14 +1,18 @@
 /* #region BODY */
-html, body {
+html {
   min-width: 25rem;
-  background: darkslategray;
+  background: #1a1a1a;
+}
+html.running {
+  background: url('https://blog.jitter.video/content/images/2022/01/perfect-loop-cube.gif') no-repeat center center fixed;
 }
 /* #endregion BODY */
 
 
 /* #region HEADER */
 nav {
-  /* background: url('https://i.imgur.com/y7yQMkw.gif'); */
+  background: url('https://www.shutterstock.com/image-vector/vector-black-geometric-background-design-260nw-1223389576.jpg');
+  margin-bottom: 1rem;
 }
 nav img {
   height: 1.5rem;
@@ -17,28 +21,31 @@ nav img {
 
 
 /* #region MAIN */
-body > main {
+body main {
   padding-top: 0;
   padding-bottom: 0;
 }
-form {
+form,
+form fieldset {
   margin-bottom: 0;
 }
-form > .grid-2, form > button {
-  margin-top: 1rem;
+form button,
+form textarea {
+  margin-bottom: 1rem;
 }
-form > .grid-2 {
+form .grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-gap: 1rem;
 }
-.box {
-  border: 4px solid wheat;
-  min-height: 4rem;
-  text-align: center;
+form video {
+  width: 100%;
 }
 form textarea {
   resize: none;
   white-space: nowrap;
+}
+#tracker input {
+  text-align: center;
 }
 /* #endregion MAIN */
