@@ -1,12 +1,46 @@
 import {
-  HTTPS,
-  isUrlBlacklisted,
-  getMode,
-  setMode,
-  getLists,
-  setLists,
-  setUseDefault,
+  messageRuntime,
+  readBlocklistEntriesMap,
 } from './common.js';
+
+
+
+
+// #region CONSTANTS
+// =================
+
+// Controls.
+const HTML        = document.documentElement;
+const CONTROLS    = document.getElementById('controls');
+const COMODE      = document.getElementById('comode');
+const CODURATION  = document.getElementById('coduration');
+const COPAUSE     = document.getElementById('copause');
+const COSTART     = document.getElementById('costart');
+const COBLOCKLIST = document.getElementById('coblocklist');
+const COMODE_TEXT = COMODE.querySelector('summary');
+const MODE_NAMES  = new Map();
+
+// Tracker.
+const TRACKER   = document.getElementById('tracker');
+const TRTEXT    = document.getElementById('trtext');
+
+// Blocklist.
+const BLOCKLIST = document.getElementById('blocklist');
+const BLHIDE    = document.getElementById('blhide');
+const BLUPDATE  = document.getElementById('blupdate');
+const BLTEXT    = document.getElementById('bltext');
+
+// Global state (interesting ones only).
+const S = {
+  menu: '',
+  mode:      0,
+  duration:  0,
+  startTime: 0,
+  paused:  false,
+  started: false,
+  blocklist: {},
+};
+// #endregion
 
 
 
@@ -14,98 +48,144 @@ import {
 // #region METHODS
 // ===============
 
-/**
- * Close all blacklisted tabs.
- * @param {string[]} whitelist whitelist
- * @param {string[]} blacklist blacklist
- * @param {boolean} useDefault use default lists?
- * @returns {Promise<void>}
- */
-async function closeBlacklistedTabs(whitelist, blacklist, useDefault) {
-  var blacklistedTabs = [], whitelistedTab = null;
-  var tabs = await chrome.tabs.query({url: HTTPS});
-  for (var tab of tabs) {
-    if (isUrlBlacklisted(tab.url, whitelist, blacklist, useDefault)) blacklistedTabs.push(tab);
-    else whitelistedTab = tab;
-  }
-  if (blacklistedTabs.length===0) return;
-  // If there is no whitelisted tab, create one.
-  if (!whitelistedTab) whitelistedTab = chrome.tabs.create({});
-  chrome.tabs.update(whitelistedTab.id, {active: true});
-  // Close all blacklisted tabs.
-  for (let tab of blacklistedTabs) {
-    try { if (tab && tab.id) chrome.tabs.remove(tab.id).then(() => console.log(`closeBlacklistedTabs(): Closed tab ${tab.url}`)); }
-    catch (err) { console.error(err); }
+// #region MAIN
+// -----------
+
+// Read state from session storage.
+async function readState(S) {
+  var c = await chrome.storage.session.get(['menu', 'mode', 'duration', 'startTime', 'paused', 'started']);
+  S.menu      = c.menu || '';
+  S.mode      = c.mode      || 0;
+  S.duration  = c.duration  || 0;
+  S.startTime = c.startTime || 0;
+  S.paused    = c.paused  || false;
+  S.started   = c.started || false;
+}
+
+
+// Read blocklist from local storage.
+async function readBlocklist(S) {
+  var {main} = await readBlocklistEntriesMap(['main']);
+  S.blocklist = main;
+}
+
+
+// Enable selection of values in dropdowns.
+function initDropdown() {
+  var dropdowns = document.querySelectorAll('details[role="list"]');
+  for (let dropdown of dropdowns) {
+    let summary = dropdown.querySelector('summary');
+    let ul      = dropdown.querySelector('ul');
+    ul.addEventListener('click', e => {
+      if (e.target.tagName === 'UL') return;
+      var value = e.target.getAttribute('data-value');
+      summary.textContent = e.target.textContent;
+      dropdown.setAttribute('data-value', value);
+      dropdown.removeAttribute('open');
+      dropdown.dispatchEvent(new Event('change'));
+    });
   }
 }
 
 
-/**
- * Main function.
- * @returns {Promise<void>}
- */
-async function main() {
-  var mode = await getMode();
-  var {whitelist, blacklist, useDefault} = await getLists();
-  var xmode    = document.querySelector('#mode');
-  var xbl      = document.querySelector('#bl');
-  var xblShow  = document.querySelector('#bl-show');
-  var xblAdd   = document.querySelector('#bl-add');
-  var xblItem  = document.querySelector('#bl-item');
-  var xuseDefault = document.querySelector('#use-default');
-  // var xdateGet = document.querySelector('#date-get')
-  // Setup popup view.
-  xmode.textContent   = mode==='ruthless'? 'Stop' : 'Start Blocking';
-  xuseDefault.checked = useDefault;
+// Initialize mode names.
+function initModeNames() {
+  for (var a of COMODE.querySelectorAll('a')) {
+    var value = parseFloat(a.getAttribute('data-value'));
+    MODE_NAMES.set(value, a.textContent);
+  }
+}
 
-  // Toggle focus mode.
-  xmode.addEventListener('click', async () => {
-    var mode = await getMode();
-    // Udapte popup view.
-    mode = mode==='ruthless'? 'disabled' : 'ruthless';
-    xmode.textContent = mode==='ruthless'? 'Stop' : 'Start Blocking';
-    // Set mode, and close all blacklisted tabs.
-    await setMode(mode);
-    if (mode==='ruthless') closeBlacklistedTabs(whitelist, blacklist, useDefault);
+
+// Initialize menu, and handle menu events.
+function initMenu(S) {
+  if (S.mode) {
+    COMODE.setAttribute('data-value', S.mode.toString());
+    updateMenu(S);
+  }
+  COMODE.addEventListener('change', () => {
+    S.mode = parseFloat(COMODE.getAttribute('data-value'));
+    chrome.storage.session.set({mode: S.mode});
   });
-
-  // Add item to blacklist.
-  xblAdd.addEventListener('click', () => {
-    var item = xblItem.value;
-    xblItem.value = '';
-    if (!blacklist.includes(item)) blacklist.push(item);
-    setLists({whitelist, blacklist, useDefault});
-  })
-
-  // Show blacklist.
-  xblShow.addEventListener('click', () => {
-    xbl.innerHTML = '';
-    for (var item of blacklist) {
-      var li = document.createElement('li');
-      li.innerText = item;
-      xbl.appendChild(li);
+  COPAUSE.addEventListener('click', e => {
+    e.preventDefault();
+    S.paused = !S.paused;
+    chrome.storage.session.set({paused: S.paused});
+    if (!S.paused) messageRuntime({type: 'closeBlackTabs'});
+    updateMenu(S);
+  });
+  COSTART.addEventListener('click', e => {
+    e.preventDefault();
+    S.started = !S.started;
+    if (S.started) {
+      S.startTime = Date.now();
+      S.mode = S.mode || 40;
     }
+    else S.paused = false;
+    chrome.storage.session.set({started: S.started, paused: S.paused, startTime: S.startTime});
+    messageRuntime({type: 'closeBlackTabs'});
+    updateMenu(S);
   });
-
-  // Add item to blacklist.
-  xblItem.addEventListener('keyup', event => {
-    event.preventDefault();
-    // On enter, add item to blacklist.
-    if (event.keyCode===13) xblAdd.click();
+  COBLOCKLIST.addEventListener('click', e => {
+    e.preventDefault();
+    if (!S.started || S.paused) S.menu = 'blocklist';
+    updateMenu(S);
   });
-
-  // Use default list?
-  xuseDefault.addEventListener('click', async () => {
-    setUseDefault(xuseDefault.checked);
-  })
-
-  // buttonGetDate.addEventListener('click', async ()=> {
-  //   var cdate = await getClientTimeZone()
-  //   var haspassed = await checkIfTimeHasFinished(cdate.getTime())
-  //   console.log(cdate.getTime())
-  //   console.log("from internet")
-  //   console.log(haspassed.getTime())
-  // });
+  BLHIDE.addEventListener('click', e => {
+    e.preventDefault();
+    S.menu = '';
+    updateMenu(S);
+  });
+  BLUPDATE.addEventListener('click', e => {
+    e.preventDefault();
+    messageRuntime({type: 'updateBlocklist', text: BLTEXT.value});
+    S.blocklist.text = BLTEXT.value;
+    updateMenu(S);
+  });
+  updateMenu(S);
 }
-main();
+
+
+// Update menu based on current state.
+function updateMenu(S) {
+  var running = S.started && !S.paused;
+  CONTROLS    .hidden = S.menu!=='';
+  BLOCKLIST   .hidden = S.menu!=='blocklist';
+  TRACKER     .hidden = !running;
+  COBLOCKLIST .hidden =  running;
+  CODURATION.disabled =  running;
+  COPAUSE   .disabled = !S.started;
+  COPAUSE.textContent =  S.started && S.paused? 'Resume' : 'Pause';
+  COSTART.textContent =  S.started? 'Stop' : 'Start';
+  BLTEXT .value = S.blocklist.text;
+  console.log(S.mode, MODE_NAMES);
+  if (S.mode)  COMODE_TEXT.textContent = MODE_NAMES.get(S.mode);
+  if (running) HTML.classList.add   ('running');
+  else         HTML.classList.remove('running');
+}
+
+
+// Intialize tracker for activity time and points accrued.
+function initTracker(S) {
+  setInterval(() => {
+    if (!S.started || S.paused) return;
+    var now = Date.now();
+    var elapsed = now - S.startTime;
+    var points  = Math.floor(elapsed / 1000);
+    TRTEXT.value = `${points} pts`;
+  }, 1000);
+}
+
+
+// Main function.
+async function main(S) {
+  await readState(S);
+  await readBlocklist(S);
+  initDropdown();
+  initModeNames();
+  initMenu(S);
+  initTracker(S);
+}
+main(S);
+// #endregion
 // #endregion

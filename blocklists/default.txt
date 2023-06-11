@@ -1,0 +1,8 @@
+!default-art
+!default-event
+!default-gaming
+!default-messaging
+!default-review
+!default-shopping
+!default-social
+!default-video

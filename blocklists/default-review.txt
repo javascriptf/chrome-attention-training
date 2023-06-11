@@ -1,0 +1,14 @@
+# MOVIE REVIEW
+# ------------
+
+imdb.com
+kinopoisk.ru
+rottentomatoes.com
+metacritic.com
+letterboxd.com
+themoviedb.org
+douban.com
+
+
+# REFERENCES
+# - https://www.similarweb.com/top-websites/arts-and-entertainment/

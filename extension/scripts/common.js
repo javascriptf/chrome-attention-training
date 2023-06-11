@@ -1,3 +1,63 @@
+// #region TYPES
+// =============
+
+/**
+ * Defines a blocklist.
+ * @typedef {object} Blocklist
+ * @property {string} name blocklist name
+ * @property {string} icon blocklist icon
+ * @property {string} url blocklist url (if remote)
+ */
+/**
+ * Defines a blocklist collection.
+ * @typedef {object.<string, Blocklist>} BlocklistMap
+ */
+
+
+/**
+ * Defines a list of URLs to be blocked.
+ * @typedef {object} BlocklistEntries
+ * @property {string} text plain text
+ * @property {string[]} exclude URLs to exlude
+ * @property {string[]} include URLs to include
+ * @property {string[]} sublists sublists (url)
+ */
+/**
+ * Defines a blocklist entries collection.
+ * @typedef {object.<string, BlocklistEntries>} BlocklistEntriesMap
+ */
+
+
+/**
+ * Defines an activity.
+ * @typedef {object} Activity
+ * @property {string} name activity name
+ * @property {string} icon activity icon
+ * @property {string[]} parents activity parents
+ */
+/**
+ * Defines an activity collection.
+ * @typedef {object.<string, Activity>} ActivityMap
+ */
+
+
+/**
+ * Defines an activity time.
+ * @typedef {object} ActivityTime
+ * @property {number} start start time (unix timestamp)
+ * @property {number} end end time (unix timestamp)
+ */
+
+
+/**
+ * Defines a collection of activity times.
+ * @typedef {object.<string, ActivityTime[]>} ActivityTimesMap
+ */
+// #endregion
+
+
+
+
 // #region GLOBALS
 // ===============
 
@@ -10,133 +70,11 @@ export const HTTPS = [
 
 /** Default config. */
 export const DEFAULT_CONFIG = {
-  mode: 'disabled',
   whitelist: [],
   blacklist: [],
-  useDefault: true,
+  blocklistMap: {},
+  activityMap: {},
 };
-
-
-/** Default whitelist of websites to be allowed. */
-export const DEFAULT_WHITELIST = [
-];
-
-
-/** Deafult blacklist of websites to be blocked. */
-export const DEFAULT_BLACKLIST = [
-  // #region ARTS & ENTERTAINMENT
-  // - https://www.similarweb.com/top-websites/arts-and-entertainment/
-  'youtube.com',
-  'netflix.com',
-  'bilibili.com',
-  'fandom.com',
-  'imdb.com',
-  'spotify.com',
-  'archiveofourown.org',
-  'pixiv.net',
-  'disneyplus.com',
-  'aparat.com',
-  'zoro.to',
-  '9animetv.to',
-  'jiocinema.com',
-  'dcinside.com',
-  'hbomax.com',
-  'hotstar.com',
-  'primevideo.com',
-  'miguvideo.com',
-  'syosetu.com',
-  'worldstar.com',
-  'hulu.com',
-  'nicovideo.jp',
-  'kinopoisk.ru',
-  'pikabu.ru',
-  'rumble.com',
-  'animeflv.net',
-  'wattpad.com',
-  'xfinity.com',
-  'asurascans.com',
-  'dailymotion.com',
-  'soundcloud.com',
-  'manganato.com',
-  'twimg.com',
-  'genius.com',
-  '9gag.com',
-  'nhk.or.jp',
-  '9anime.to',
-  'qidian.com',
-  'npr.org',
-  'cmoa.jp',
-  'crunchyroll.com',
-  'soap2day.to',
-  'tenki.jp',
-  'ficbook.net',
-  'deviantart.com',
-  'programme-tv.net',
-  'tapmad.com',
-  'fandomwire.com',
-  'mediaset.it',
-  'fmovies.to',
-  'bookmyshow.com',
-  // #endregion
-  // #region MOVIE REVIEW
-  'rottentomatoes.com',
-  'metacritic.com',
-  'letterboxd.com',
-  'themoviedb.org',
-  'douban.com',
-  // #endregion
-  // #region SHOPPING
-  'amazon.*',
-  'ebay.com',
-  'craigslist.org',
-  'walmart.com',
-  'target.com',
-  'bestbuy.com',
-  'apple.com',
-  'microsoft.com',
-  // #endregion
-  // #region SOCIAL MEDIA
-  'facebook.com',
-  'twitter.com',
-  'instagram.com',
-  'reddit.com',
-  'tumblr.com',
-  'pinterest.com',
-  'twitch.tv',
-  'tiktok.com',
-  'linkedin.com',
-  'quora.com',
-  'vk.com',
-  'weibo.com',
-  'telegram.org',
-  'discord.com',
-  'snapchat.com',
-  'medium.com',
-  'mix.com',
-  'myspace.com',
-  'livejournal.com',
-  'flickr.com',
-  'meetup.com',
-  'tagged.com',
-  'ask.fm',
-  'nextdoor.com',
-  'foursquare.com',
-  'meetme.com',
-  'vimeo.com',
-  'vine.co',
-  // #endregion
-  // #region EMAIL
-  'mail.google.com',
-  'outlook.live.com',
-  'outlook.office.com',
-  'mail.yahoo.com',
-  'mail.aol.com',
-  'mail.yandex.com',
-  'mail.zoho.com',
-  'mail.com',
-  'protonmail.com',
-  // #endregion
-];
 // #endregion
 
 
@@ -144,6 +82,40 @@ export const DEFAULT_BLACKLIST = [
 
 // #region METHODS
 // ===============
+
+// #region UTILITY
+// ---------------
+
+/**
+ * Sleep for a number of milliseconds.
+ * @param {number} ms milliseconds to sleep
+ * @returns {Promise<void>}
+ */
+export async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
+/**
+ * Send a message to the background script.
+ * @param {any} msg message to send
+ * @returns {Promise<any>} response
+ */
+export async function messageRuntime(msg) {
+  var err = null;
+  for (var i=0; i<2; ++i) {
+    try { return await chrome.runtime.sendMessage(msg); }
+    catch (e) { err = e; await sleep(100); }
+  }
+  throw err;
+}
+// #endregion
+
+
+
+
+// #region LISTS
+// -------------
 
 /**
  * Search a wildcard list for a value.
@@ -160,9 +132,9 @@ function searchWildcardList(list, value) {
     var el = list[i];
     if (!/[*?]/.test(el)) continue;
     var el = el.replace(/([\.\*\?])/g, m => {
-      if (m=='.') return '\\.';
-      if (m=='*') return '.*?';
-      if (m=='?') return '.';
+      if (m==='.') return '\\.';
+      if (m==='*') return '.*?';
+      if (m==='?') return '.';
       return m;
     });
     var re = new RegExp(el);
@@ -173,101 +145,456 @@ function searchWildcardList(list, value) {
 
 
 /**
- * Examine if the url is in a list.
+ * Examine if the url is blacklisted.
  * @param {string} url url string
  * @param {string[]} whitelist whitelist
  * @param {string[]} blacklist blacklist
- * @param {boolean} useDefault use default lists?
  * @returns {boolean} true if url is blacklisted, false otherwise
  */
-export function isUrlBlacklisted(url, whitelist, blacklist, useDefault) {
+export function isUrlBlacklisted(url, whitelist, blacklist) {
   if (!url) return false;
   var hostname = new URL(url).hostname.replace(/^www\./, '');
   if (searchWildcardList(whitelist, hostname) >= 0) return false;
   if (searchWildcardList(blacklist, hostname) >= 0) return true;
-  if (useDefault && searchWildcardList(DEFAULT_WHITELIST, hostname) >= 0) return false;
-  if (useDefault && searchWildcardList(DEFAULT_BLACKLIST, hostname) >= 0) return true;
   return false;
 }
 
 
+
 /**
- * Fetch focus mode config.
- * @returns {Promise<string>} focus mode
+ * Read whitelist and blacklist.
+ * @returns {Promise<{whitelist: string[], blacklist: string[]}>} lists
  */
-export async function getMode() {
-  var c = await chrome.storage.local.get('mode');
-  return c.mode || DEFAULT_CONFIG.mode;
+export async function readLists() {
+  var c = await chrome.storage.local.get(['whitelist', 'blacklist']);
+  return Object.assign({whitelist: [], blacklist: []}, c);
 }
 
 
 /**
- * Update focus mode config.
- * @param {string} mode focus mode
- * @returns {Promise<void>}
- */
-export async function setMode(mode) {
-  await chrome.storage.local.set({mode});
-}
-
-
-/**
- * Fetch whitelist and blacklist.
- * @returns {Promise<{whitelist: string[], blacklist: string[], useDefaultList: boolean}>} lists
- */
-export async function getLists() {
-  var c = await chrome.storage.local.get(['whitelist', 'blacklist', 'useDefault']);
-  return Object.assign({}, DEFAULT_CONFIG, c);
-}
-
-
-/**
- * Update whitelist and blacklist.
+ * Write whitelist and blacklist.
  * @param {string[]} whitelist whitelist
  * @param {string[]} blacklist blacklist
- * @param {boolean} useDefault use default lists?
  * @returns {Promise<void>}
  */
-export async function setLists(whitelist, blacklist, useDefault) {
-  await chrome.storage.local.set({whitelist, blacklist, useDefault});
+export async function writeLists(whitelist, blacklist) {
+  await chrome.storage.local.set({whitelist, blacklist});
+}
+// #endregion
+
+
+
+
+// #region BLOCKLISTS
+// ------------------
+
+/**
+ * Get blocklist id from name.
+ * @param {string} name blocklist name (or url)
+ * @returns {string} blocklist id
+ */
+export function blocklistId(name) {
+  return name.replace(/\W+/g, '_').toLowerCase();
 }
 
 
 /**
- * Fetch whether to use default lists.
- * @param {boolean} useDefault use default lists?
+ * Get remote blocklists.
+ * @param {BlocklistMap} xs blocklist collection
+ * @returns {Promise<string[]>} remote blocklist ids
+ */
+export async function remoteBlocklists(xs) {
+  var remotes = [];
+  for (var id of Object.keys(xs))
+    if (xs[id].url) remotes.push(id);
+  return remotes;
+}
+
+
+/**
+ * Get remote-only blocklists.
+ * @param {BlocklistMap} xs blocklist collection
+ * @returns {Promise<string[]>} remote-only blocklist ids
+ */
+export async function remoteOnlyBlocklists(xs) {
+  var remotes = [];
+  for (var id of Object.keys(xs))
+    if (xs[id].name===xs[id].url) remotes.push(id);
+  return remotes;
+}
+
+
+/**
+ * Fetch the blocklist collection.
+ * @returns {Promise<BlocklistMap>} blocklist collection
+ */
+export async function readBlocklistMap() {
+  var c = await chrome.storage.local.get('blocklistMap');
+  return c.blocklistMap || DEFAULT_CONFIG.blocklistMap;
+}
+
+
+/**
+ * Update a blocklist collection.
+ * @param {BlocklistMap} xs blocklist collection
  * @returns {Promise<void>}
  */
-export async function setUseDefault(useDefault) {
-  await chrome.storage.local.set({useDefault});
+export async function writeBlocklistMap(xs) {
+  await chrome.storage.local.set({blocklistMap: xs});
 }
 
 
 /**
- * Get the current system date.
- * @returns {Promise<Date>} system date
+ * Delete some blocklists from the collection.
+ * @param {BlocklistMap} xs blocklist collection
+ * @param {string[]} ids blocklist ids
  */
-export function getSystemDate() {
-  return new Date();
+export async function deleteBlocklists(xs, ids) {
+  var a = {};
+  for (var id of Object.keys(xs))
+    if (!ids.includes(id)) a[id] = xs[id];
+  await writeBlocklistMap(a);
+  if (ids.length > 0) await deleteBlocklistEntriesMap(ids);
 }
 
 
 /**
- * Fetch the current internet date.
- * @returns {Promise<Date>} internet date
+ * Select the blocklists to use.
+ * @param {string} id blocklist id
+ * @returns {Promise<void>}
  */
-export function getInternetDate() {
-  return new Promise((resolve, reject) => {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', 'http://worldtimeapi.org/api/ip');
-    xhr.onload = () => {
-      if (xhr.status>=200 && xhr.status<300) {
-        var data = JSON.parse(xhr.responseText);
-        resolve(new Date(data.datetime));
-      } else reject(new Error(xhr.statusText));
-    };
-    xhr.onerror = () => reject(new Error(xhr.statusText));
-    xhr.send();
-  });
+export async function selectBlocklist(id) {
+  var {exclude, include} = await flattenBlocklistEntries([id]);
+  await writeLists(exclude, include);
 }
+
+
+/**
+ * Import blocklist from url.
+ * @param {string} name blocklist name
+ * @param {string} icon blocklist icon
+ * @param {string} url blocklist url
+ * @param {boolean} overwrite overwrite existing blocklist?
+ * @returns {Promise<void>}
+ */
+export async function importBlocklist(name, icon, url, overwrite=false) {
+  var id = blocklistId(name);
+  var xs = await readBlocklistMap(), imported = new Set();
+  if (xs[id] && !overwrite) await writeBlocklistMap(Object.assign(xs, {[id]: {name, icon, url}}));
+  await writeBlocklistEntriesMap({[id]: await fetchBlocklistEntries(url)});
+  await importBlocklistDependenciesWith(xs, imported, [id], overwrite);
+}
+
+
+/**
+ * Import blocklist dependencies of some blocklists.
+ * @param {string[]} ids blocklist ids
+ * @returns {Promise<void>}
+ */
+export async function importBlocklistDependencies(ids, overwrite=false) {
+  var xs = await readBlocklistMap(), imported = new Set();
+  await importBlocklistDependenciesWith(xs, imported, ids, overwrite);
+}
+
+async function importBlocklistDependenciesWith(xs, imported, ids, overwrite=false) {
+  var sublists = (await blocklistEntriesSublists(ids)).filter(url => !imported.has(url));
+  if (!overwrite) sublists = await unavailableBlocklistEntries(sublists);
+  if (sublists.length===0) return;
+  // Import the missing sublists.
+  await Promise.all(sublists.map(async url => {
+    var id = blocklistId(url);
+    if (!xs[id] || overwrite) await writeBlocklistMap(Object.assign(xs, {[id]: {name: url, icon: null, url}}));
+    await writeBlocklistEntriesMap({[id]: await fetchBlocklistEntries(url)});
+    imported.add(url);
+  }));
+  // Recursively import sublists of the sublists.
+  await importBlocklistDependenciesWith(xs, imported, sublists.map(blocklistId), overwrite);
+}
+// #endregion
+
+
+
+
+// #region BLOCKLIST ENTRIES
+// -------------------------
+
+/**
+ * Check if blocklist entries is empty.
+ * @param {BlocklistEntries} x blocklist entries
+ * @returns {boolean} true if empty, false otherwise
+ */
+export function isBlocklistEntriesEmpty(x) {
+  return !x || (x.exclude.length===0 && x.include.length===0 && x.sublists.length===0);
+}
+
+
+/**
+ * Fetch sublists in blocklist entries of some blocklists.
+ * @param {string[]} blocklists blocklist ids
+ * @returns {Promise<string[]>} sublists of blocklist entries
+ */
+async function blocklistEntriesSublists(blocklists) {
+  var xs = await readBlocklistEntriesMap(blocklists);
+  var sublists = new Set();
+  for (var id of blocklists) {
+    for (var item of xs[id].sublists)
+      sublists.add(item);
+  }
+  return [...sublists];
+}
+
+
+/**
+ * Fetch blocklists/URLs whose entries are unavailable.
+ * @param {string[]} urls blocklist ids or urls
+ * @returns {Promise<string[]>} unavailable urls
+ */
+async function unavailableBlocklistEntries(urls) {
+  var xs = await readBlocklistEntriesMap(urls.map(blocklistId));
+  var unavailable = [];
+  for (var url of urls)
+    if (isBlocklistEntriesEmpty(xs[blocklistId(url)])) unavailable.push(url);
+  return unavailable;
+}
+
+
+/**
+ * Fetch a collection of blocklist entries of some blocklists.
+ * @param {string[]} blocklists blocklist ids
+ * @returns {Promise<BlocklistEntriesMap>} collection of blocklist entries
+ */
+export async function readBlocklistEntriesMap(blocklists) {
+  var keys = blocklists.map(id => `blocklistEntries_${id}`);
+  var c    = await chrome.storage.local.get(keys), a = {};
+  for (var id of blocklists)
+    a[id] = c[`blocklistEntries_${id}`] || {exclude: [], include: [], sublists: []};
+  return a;
+}
+
+
+/**
+ * Update a collection of blocklist entries of some blocklists.
+ * @param {BlocklistEntriesMap} xs collection of blocklist entries
+ * @returns {Promise<void>}
+ */
+export async function writeBlocklistEntriesMap(xs) {
+  var c = {}, removals = [];
+  for (var id of Object.keys(xs)) {
+    if (isBlocklistEntriesEmpty(xs[id])) removals.push(id);
+    else c[`blocklistEntries_${id}`] = xs[id];
+  }
+  await chrome.storage.local.set(c);
+  if (removals.length > 0) await deleteBlocklistEntriesMap(removals);
+}
+
+
+/**
+ * Delete blocklist entries of some blocklists.
+ * @param {string[]} blocklists blocklist ids
+ * @returns {Promise<void>}
+ */
+export async function deleteBlocklistEntriesMap(blocklists) {
+  var keys = blocklists.map(id => `blocklistEntries_${id}`);
+  await chrome.storage.local.remove(keys);
+}
+
+
+/**
+ * Flatten blocklist entries of some blocklists.
+ * @param {string[]} blocklists blocklist ids
+ * @returns {Promise<BlocklistEntries>} flattened blocklist entries
+ */
+export async function flattenBlocklistEntries(blocklists) {
+  var exclude  = new Set();
+  var include  = new Set();
+  var sublists = new Set();
+  await flattenBlocklistEntriesTo(exclude, include, sublists, blocklists);
+  return {text: '', exclude: [...exclude], include: [...include], sublists: [...sublists]};
+}
+
+async function flattenBlocklistEntriesTo(exclude, include, sublists, blocklists) {
+  var xs = await readBlocklistEntriesMap(blocklists);
+  var newids = [];
+  for (var id of blocklists) {
+    var x = xs[id];
+    for (var item of x.exclude) exclude.add(item);
+    for (var item of x.include) include.add(item);
+    for (var item of x.sublists) {
+      if (sublists.has(item)) continue;
+      sublists.add(item);
+      newids.push(blocklistId(item));
+    }
+  }
+  if (newids.length > 0) await flattenBlocklistEntriesTo(exclude, include, sublists, newids);
+}
+
+
+/**
+ * Fetch blocklist entries from given url.
+ * @param {string} url blocklist url
+ * @returns {Promise<BlocklistEntries>} blocklist entries
+ */
+export async function fetchBlocklistEntries(url) {
+  if (!/^https?:/.test(url)) url = chrome.runtime.getURL(`blocklists/${url}.txt`);
+  var text = await (await fetch(url)).text();
+  return parseBlocklistEntries(text);
+}
+
+
+/**
+ * Parse blocklist entries from given text.
+ * @param {string} text blocklist text
+ * @returns {BlocklistEntries} blocklist entries
+ */
+export function parseBlocklistEntries(text) {
+  var exclude = [], include = [], sublists = [];
+  for (var line of text.split(/\r?\n/)) {
+    var line = line.trim();
+    var rest = line.slice(1).trim();
+    if (!line) continue;
+    if (line.startsWith('#')) continue;
+    if (line.startsWith('!'))     sublists.push(rest);
+    else if (line.startsWith('+')) exclude.push(rest);
+    else if (line.startsWith('-')) include.push(rest);
+    else                           include.push(line);
+  }
+  return {text, exclude, include, sublists};
+}
+// #endregion
+
+
+
+
+// #region ACTIVITIES
+// ------------------
+
+/**
+ * Get activity id from name.
+ * @param {string} name activity name
+ * @returns {string} activity id
+ */
+export function activityId(name) {
+  return name.replace(/\W+/g, '_').toLowerCase();
+}
+
+
+/**
+ * Read the activity collection.
+ * @returns {Promise<ActivityMap>} activity collection
+ */
+export async function readActivityMap() {
+  var c = await chrome.storage.local.get('activityMap');
+  return c.activityMap || DEFAULT_CONFIG.activityMap;
+}
+
+
+/**
+ * Write an activity collection.
+ * @param {ActivityMap} xs activity collection
+ * @returns {Promise<void>}
+ */
+export async function writeActivityMap(xs) {
+  await chrome.storage.local.set({activities: xs});
+}
+
+
+/**
+ * Get parent activities of an activity.
+ * @param {ActivityMap} xs activities
+ * @param {string} id activity id
+ * @returns {string[]} parent activity ids
+ */
+export function parentActivities(xs, id) {
+  if   (!xs[id]) return [];
+  return xs[id].parents;
+}
+
+
+/**
+ * Obtain child activities of an activity.
+ * @param {ActivityMap} xs activities
+ * @param {string} id activity id
+ * @returns {string[]} child activity ids
+ */
+export function childActivities(xs, id) {
+  if (!xs[id]) return [];
+  var children = [];
+  for (var id of Object.keys(xs)) {
+    var parents = xs[id].parents;
+    if (parents.includes(id)) children.push(id);
+  }
+  return children;
+}
+
+
+/**
+ * Obtain descendent activities of an activity.
+ * @param {ActivityMap} xs activities
+ * @param {string} id activity id
+ * @returns {string[]} descendent activity ids
+ */
+export function descendentActivities(xs, id) {
+  var descendents = new Set();
+  descendentActivitiesTo(descendents, xs, id);
+  return [...descendents];
+}
+
+function descendentActivitiesTo(descendents, xs, id) {
+  if (!xs[id]) return;
+  var children = childActivities(xs, id);
+  for (var child of children) {
+    if (descendents.has(child)) continue;
+    descendents.add(child);
+    descendentActivitiesTo(descendents, xs, child);
+  }
+}
+// #endregion
+
+
+
+
+// #region ACTIVITY TIMES
+// ----------------------
+
+/**
+ * Read a collection of activity times of some activities.
+ * @param {string[]} activities activity ids
+ * @returns {Promise<ActivityTimesMap>} collection of activity times
+ */
+export async function readActivityTimesMap(activities) {
+  var keys = activities.map(id => `activityTimes_${id}`);
+  var c    = await chrome.storage.local.get(keys), a = {};
+  for (var id of activities)
+    a[id] = c[`activityTimes_${id}`] || [];
+  return a;
+}
+
+
+/**
+ * Write a collection of activity times of some activities.
+ * @param {ActivityTimesMap} xs collection of activity times
+ * @returns {Promise<void>}
+ */
+export async function writeActivityTimesMap(xs) {
+  var c = {}, removals = [];
+  for (var id in xs) {
+    var  x = xs[id];
+    if (!x || x.length===0) removals.push(id);
+    else c[`activityTimes_${id}`] = x;
+  }
+  await chrome.storage.local.set(c);
+  if (removals.length > 0) await deleteActivityTimes(removals);
+}
+
+
+/**
+ * Delete activity times of some activities.
+ * @param {string[]} activities activity ids
+ * @returns {Promise<void>}
+ */
+export async function deleteActivityTimes(activities) {
+  var keys = activities.map(id => `activityTimes_${id}`);
+  await chrome.storage.local.remove(keys);
+}
+// #endregion
 // #endregion

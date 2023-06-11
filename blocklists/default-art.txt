@@ -1,0 +1,12 @@
+# ART
+# ---
+
+pixiv.net
+dcinside.com
+pikabu.ru
+twimg.com
+deviantart.com
+
+
+# REFERENCES
+# - https://www.similarweb.com/top-websites/arts-and-entertainment/
