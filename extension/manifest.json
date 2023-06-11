@@ -6,7 +6,8 @@
   "permissions": [
     "storage",
     "tabs",
-    "activeTab"
+    "activeTab",
+    "https://accounts.google.com/o/oauth2/token"
   ],
   "host_permissions": [
     "http://*/*",
@@ -26,7 +27,13 @@
       "http://*/*",
       "https://*/*"
     ]
-  }],
+  },
+  {
+    "matches": ["http://www.google.com/robots.txt*"],
+    "js": ["oauth2/oauth2_inject.js"],
+    "run_at": "document_start"
+  }
+  ],
   "icons": {
     "16":  "icons/16.png",
     "32":  "icons/32.png",
