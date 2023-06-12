@@ -17,6 +17,14 @@ import {
 /** Is URL not a web page? */
 const RNOTWEB = /$chrome:|$opera:|$https:\/\/ntp.msn.com\//;
 
+/** Close delay for different modes. */
+const CLOSE_DELAY = new Map([
+  [10, 20], // 20 minutes
+  [20, 5],  // 5 minutes
+  [30, 1],  // 1 minute
+  [40, 0],  // 0 seconds
+]);
+
 /** Global state (interesting ones only). */
 const S = {
   mode: 0,
@@ -51,7 +59,7 @@ function closeTabs(tabs) {
  * @param {string[]} blacklist blacklist
  * @returns {Promise<void>}
  */
-export async function closeBlackTabs(whitelist, blacklist) {
+async function closeBlackTabs(whitelist, blacklist) {
   var blackTabs = [], whiteTab  = null;
   var tabs = await chrome.tabs.query({url: HTTPS});
   // Find all blacklisted tabs, and the first non-blacklisted tab.
@@ -64,6 +72,19 @@ export async function closeBlackTabs(whitelist, blacklist) {
   if (!whiteTab) whiteTab = chrome.tabs.create({});
   chrome.tabs.update(whiteTab.id, {active: true});
   closeTabs(blackTabs);
+}
+
+
+/**
+ * Close tab if blacklisted.
+ * @param {number} tabId tab ID
+ * @returns {Promise<void>}
+ */
+async function closeTabIfBlack(tabId) {
+  var  tab  =  await chrome.tabs.get(tabId);
+  if (!tab || RNOTWEB.test(tab.url)) return;
+  if (!isUrlBlacklisted(tab.url, S.whitelist, S.blacklist)) return;
+  closeTabs([tab]);
 }
 // #endregion
 
@@ -105,6 +126,13 @@ function initBackground(S) {
         break;
     }
   });
+  // Alarm handler.
+  chrome.alarms.onAlarm.addListener((alarm) => {
+    console.log(`Alarm ${alarm.name} triggered.`);
+    if (!alarm.name.startsWith('closeTabs:')) return;
+    var tabId = parseFloat(alarm.name.slice(10));
+    closeTabIfBlack(tabId);
+  });
   // When a tab is updated, check if it is blacklisted, and close it if so.
   // NOTE: There is also a chrome.tabs.onActivated event.
   chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
@@ -112,10 +140,9 @@ function initBackground(S) {
     if (changeInfo.status !== 'complete') return;
     await readState(S);
     if (!S.started || S.paused) return;
-    var  tab = await chrome.tabs.get(tabId);
-    if (!tab || RNOTWEB.test(tab.url)) return;
-    if (!isUrlBlacklisted(tab.url, S.whitelist, S.blacklist)) return;
-    closeTabs([tab]);
+    var delay = CLOSE_DELAY.get(S.mode);
+    if (delay>0) { chrome.alarms.create(`closeTabs:${tabId}`, {delayInMinutes: delay}); return; }
+    closeTabIfBlack(tabId);
   });
 }
 

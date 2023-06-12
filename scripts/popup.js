@@ -297,7 +297,6 @@ function initMenu(S) {
 // Update tracker based on current state.
 function updateTracker(S) {
   if (!S.started || S.paused) return;
-  console.log('updateTracker()', S);
   var elapsed = Date.now() - S.startTime;
   var bounty  = calculateBounty(elapsed, S.mode);
   var currentElapsed = S.elapsed + elapsed;
@@ -316,7 +315,6 @@ function updateTracker(S) {
 
 // Update menu based on current state.
 function updateMenu(S) {
-  console.log('updateMenu()', S);
   var running = S.started && !S.paused;
   if (S.duration===0)  CODURATION.removeAttribute('aria-invalid');
   else if (!S.started) CODURATION.setAttribute('aria-invalid', isNaN(S.duration)? 'true' : 'false');
