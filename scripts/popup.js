@@ -71,6 +71,7 @@ const S = {
   paused:  false,
   started: false,
   blocklist: {},
+  durationReverse: false,
 };
 // #endregion
 
@@ -83,6 +84,30 @@ const S = {
 // #region MAIN
 // -----------
 
+// Parse duration in text to milliseconds.
+function parseDuration(text) {
+  // Early check for invalid cases.
+  var re = /([\d\.]+)|(\w+)|[,\s]+/g;
+  if (text.replace(re, '').length > 0) return NaN;
+  var text  = text.replace(re, ' $1 $2 ').trim().toLowerCase();
+  if (text.length===0) return 0;  // Empty string is valid.
+  var words = text.split(/\s+/);
+  if (words.length % 2!==0) return NaN;
+  // Obtain duration in milliseconds.
+  var ms = 0;
+  for (var i=0; i<words.length; i+=2) {
+    var n = parseFloat(words[i]);
+    if (isNaN(n)) return NaN;
+    var u = words[i+1];
+    if (u.startsWith('d')) ms += n*24*60*60*1000;
+    if (u.startsWith('h')) ms += n*60*60*1000;
+    if (u.startsWith('m')) ms += n*60*1000;
+    if (u.startsWith('s')) ms += n*1000;
+  }
+  return ms;
+}
+
+
 // Stringify duration in milliseconds.
 function stringifyDuration(ms) {
   var s = Math.floor(ms/1000);
@@ -94,7 +119,7 @@ function stringifyDuration(ms) {
   if (h) a += h + ' hour ';
   if (m) a += m + ' min ';
   if (s) a += s + ' sec ';
-  return a.trim();
+  return a.trim() || '0 sec';
 }
 
 
@@ -116,7 +141,8 @@ function stringifyBounty(bounty) {
 
 // Calculate bounty from elapsed time and mode.
 function calculateBounty(elapsed, mode) {
-  var factor = 40/mode;
+  var factor = mode/10;
+  console.log('calculateBounty', mode, factor);
   return Math.floor(elapsed*factor/1000);
 }
 
@@ -210,6 +236,15 @@ function initMenu(S) {
     S.mode = parseFloat(COMODE.getAttribute('data-value'));
     writeState(S);
   });
+  CODURATION.addEventListener('change', () => {
+    S.duration = parseDuration(CODURATION.value);
+    writeState(S);
+    updateMenu(S);
+  });
+  CODURATION.addEventListener('click', () => {
+    if (S.running) S.durationReverse = !S.durationReverse;
+    updateMenu(S);
+  });
   COPAUSE.addEventListener('click', e => {
     e.preventDefault();
     S.paused = !S.paused;
@@ -225,7 +260,7 @@ function initMenu(S) {
     e.preventDefault();
     S.started = !S.started;
     if (S.started) {
-      S.mode    = S.mode || 40;
+      S.mode    = S.mode || 10;
       S.elapsed = 0;
       S.startBounty = S.bounty;
       S.startTime   = Date.now();
@@ -254,20 +289,37 @@ function initMenu(S) {
     S.blocklist.text = BLTEXT.value;
     updateMenu(S);
   });
-  setInterval(() => {
-    if (!S.started || S.paused) return;
-    var elapsed = Date.now() - S.startTime;
-    var bounty  = calculateBounty(elapsed, S.mode);
-    CODURATION.value = stringifyDuration(S.elapsed + elapsed);
-    TRTEXT    .value = stringifyBounty(S.bounty + bounty - S.startBounty) + ' bounty';
-  }, 1000);
+  setInterval(() => updateTracker(S), 1000);
   updateMenu(S);
+}
+
+
+// Update tracker based on current state.
+function updateTracker(S) {
+  if (!S.started || S.paused) return;
+  console.log('updateTracker()', S);
+  var elapsed = Date.now() - S.startTime;
+  var bounty  = calculateBounty(elapsed, S.mode);
+  var currentElapsed = S.elapsed + elapsed;
+  var currentBounty  = S.bounty  + bounty - S.startBounty;
+  if (S.duration>0) {
+    var remaining = S.duration - currentElapsed;
+    if (S.durationReverse && remaining>0) CODURATION.value = stringifyDuration(remaining) + ' remaining';
+    else if (remaining>0) CODURATION.value = stringifyDuration(currentElapsed);
+    else CODURATION.value = stringifyDuration(S.duration) + ' +  ' + stringifyDuration(-remaining) + ' overtime';
+  }
+  else CODURATION.value = stringifyDuration(currentElapsed);
+  TRTEXT.value = stringifyBounty(currentBounty) + ' bounty';
+  if (S.duration>0 && currentElapsed >= S.duration) HTML.classList.add('completed');
 }
 
 
 // Update menu based on current state.
 function updateMenu(S) {
+  console.log('updateMenu()', S);
   var running = S.started && !S.paused;
+  if (S.duration===0)  CODURATION.removeAttribute('aria-invalid');
+  else if (!S.started) CODURATION.setAttribute('aria-invalid', isNaN(S.duration)? 'true' : 'false');
   RANK  .textContent = getRank(S.bounty);
   BOUNTY.textContent = stringifyBounty(S.bounty);
   CONTROLS    .hidden = S.menu!=='';
@@ -280,8 +332,10 @@ function updateMenu(S) {
   COSTART.textContent =  S.started? 'Stop' : 'Start';
   BLTEXT .value = S.blocklist.text;
   if (S.mode)  COMODE_TEXT.textContent = MODE_NAMES.get(S.mode);
-  if (running) HTML.classList.add   ('running');
-  else         HTML.classList.remove('running');
+  if (running)  HTML.classList.add   ('running');
+  else          HTML.classList.remove('running');
+  if (!running) HTML.classList.remove('completed');
+  updateTracker(S);
 }
 
 

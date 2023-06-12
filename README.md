@@ -43,4 +43,4 @@ Helps you remain focused on a topic of study for extended periods.
 - [RegExr : gskinner](https://regexr.com/)
 
 
-[download]: https://github.com/wolfram77/chrome-attention-training/releases/download/v0.3/chrome-attention-training.crx
+[download]: https://github.com/wolfram77/chrome-attention-training/releases/download/v0.4/chrome-attention-training.crx

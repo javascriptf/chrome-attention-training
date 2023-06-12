@@ -4,14 +4,17 @@ html {
   background: #1a1a1a;
 }
 html.running {
-  background: url('https://blog.jitter.video/content/images/2022/01/perfect-loop-cube.gif') no-repeat center center fixed;
+  background: url('../resources/MclalEN.gif') no-repeat center center fixed;
+}
+html.completed {
+  background: url('../resources/j5SNPdB.gif') no-repeat center center fixed !important;
 }
 /* #endregion BODY */
 
 
 /* #region HEADER */
 nav {
-  background: url('https://www.shutterstock.com/image-vector/vector-black-geometric-background-design-260nw-1223389576.jpg');
+  background: url('../resources/sagelJi.png');
   margin-bottom: 1rem;
 }
 nav img {
