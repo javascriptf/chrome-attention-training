@@ -1,9 +1,78 @@
 Helps you remain focused on a topic of study for extended periods.
 
-[![](https://i.imgur.com/Ly7c7xS.png)][download]
+> By [Subhajit Sahu] and [Vaibhav Chimalgi]. \
+> Click [here][download] to download the extension.
 
-> Click [here][download] to download the extension. \
-> With [Silver lining] technology!
+<br>
+
+Have you been sometimes spent a lot of time on *social media* and *video sharing*
+*websites*? Is the *monkey* in your mind taking over the *steering wheel* (See
+[Tim Urban's talk] on procrastination)? We share with you this that helps you remain
+focused on a topic of study for extended periods. It does this by **blocking**
+**distracting websites** for a specified period of time. It also provides a **timer** to
+help you keep track of **your study time**. Use this along with the [Pomodoro technique]
+to get the most out of your time.
+
+When its study time, you can set a *fixed duration*, such as `25 min`, or leave it
+blank to continue for an *unspecified duration*, and click `Start`. We include four
+different **modes** of blocking websites. These include `Novice`, `Competent`, `Professional`,
+and `Legendary`.
+
+- `Novice` mode closes blocked websites afer `20 min`.
+- `Competent` mode closes blocked websites afer `5 min`.
+- `Professional` mode closes blocked websites afer `1 min`.
+- `Legendary` mode closes blocked websites **immediately**.
+
+Higher modes are rewarded with more **bounty**, and as your bounty increases, your
+**rank** increases from `Cadet` to `Cadet II`, `Officer`, and so on (this is our
+gamification element). This extension is currently in *beta*, and we are working
+on adding more features. We would love to hear your feedback and suggestions.
+
+We have included a *default* **blocklist** of websites that are distracting. You can
+add more websites to the list by adding their *domain names* to the list. You can
+also *exclude websites* from the list, or *include remote lists* of websites to
+block. See the example below for details.
+
+```
+# Let's block a site
+apple.com
+
+# Or
+# - apple.com
+
+# Now, let's allow a site
++ google.com
+
+# Let's block sites using the default list
+! default
+
+# You can also block using default sub-lists
+# ! default-video
+# ! default-social
+
+# You can also block sites using custom lists
+# ! https://raw.githubusercontent.com/javascriptf/chrome-attention-training/main/blocklists/default-gaming.txt
+```
+
+<br>
+
+
+### Screenshots
+
+[![](https://i.imgur.com/AjiHJ0U.png)][download]
+[![](https://i.imgur.com/Rt1x23Z.png)][download]
+[![](https://i.imgur.com/QtmCkb7.png)][download]
+[![](https://i.imgur.com/YKqEsvL.png)][download]
+[![](https://i.imgur.com/LeCyLnO.png)][download]
+[![](https://i.imgur.com/yTJmHoO.png)][download]
+[![](https://i.imgur.com/f28YI4P.png)][download]
+[![](https://i.imgur.com/ckP0QeM.png)][download]
+
+[Subhajit Sahu]: https://github.com/wolfram77
+[Vaibhav Chimalgi]: https://github.com/EntropyDev
+[Tim Urban's talk]: https://www.youtube.com/watch?v=Rk5C149J9C0
+[Pomodoro technique]: https://en.wikipedia.org/wiki/Pomodoro_Technique
+[download]: https://github.com/wolfram77/chrome-attention-training/releases/download/v0.6/chrome-attention-training.crx
 
 <br>
 <br>
@@ -41,6 +110,3 @@ Helps you remain focused on a topic of study for extended periods.
 - [Whistle free icon : flatart_icons](https://www.flaticon.com/free-icon/whistle_3271746)
 - [Perfectly looped GIFs: how to create them - Jitter](https://blog.jitter.video/perfectly-looped-gifs/)
 - [RegExr : gskinner](https://regexr.com/)
-
-
-[download]: https://github.com/wolfram77/chrome-attention-training/releases/download/v0.5/chrome-attention-training.crx
